@@ -1,5 +1,5 @@
 // Service worker mínimo: permite instalar el panel como app. Siempre busca la versión nueva (red primero).
-const CACHE = 'bingos-v1';
+const CACHE = 'bingos-v2';
 self.addEventListener('install', e => self.skipWaiting());
 self.addEventListener('activate', e => e.waitUntil(clients.claim()));
 self.addEventListener('fetch', e => {

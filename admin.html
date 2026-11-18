@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>Bingos · Panel</title>
 <meta name="theme-color" content="#14532d">
-<link rel="icon" href="icon.svg">
+<link rel="icon" href="icono-v2.svg">
 <link rel="manifest" href="manifest.json">
 <style>
   :root{--v:#14532d;--v2:#16a34a;--r:#dc2626;--am:#f59e0b;--g:#e5e7eb;--mut:#64748b}
@@ -73,11 +73,11 @@
     <div class="kpis" id="kpis"></div>
     <div class="tabs" id="tabs">
       <button data-t="agenda" class="on">🔔 Agenda</button>
-      <button data-t="cobrar">Pendientes</button>
       <button data-t="bonos">Cartones</button>
       <button data-t="interesados">Interesados</button>
       <button data-t="movs">Movimientos</button>
       <button data-t="rend">Rendiciones</button>
+      <button data-t="disp">Disponibles</button>
     </div>
     <div id="buscar" style="display:none;margin-bottom:10px"><input id="q" placeholder="Buscar por nombre, DNI, teléfono o N° de cartón" oninput="render()"></div>
     <div id="lista"></div>
@@ -125,7 +125,7 @@ async function cargar(){
   const id = BID;
   $('tabsB').querySelectorAll('button').forEach(x => x.classList.toggle('on', x.dataset.id === id));
   document.querySelector('header').style.background = bingo().color || '#14532d';
-  if (CACHE[id]) { aplicar(CACHE[id], 'cache'); if (IR) { const c = IR; IR = null; detalle(c); } }
+  if (CACHE[id]) { aplicar(CACHE[id], 'cache'); if (IR) { const c = IR; IR = null; c(); } }
   else $('lista').innerHTML = '<div class="vacio">Cargando…</div>';
   actualizando(true);
   try {
@@ -133,7 +133,7 @@ async function cargar(){
     if (id === BID && !$('modal').classList.contains('on')) aplicar(r, 'carga');
     else if (r.ok) CACHE[id] = r;
   } finally { actualizando(false); }
-  if (IR) { const c = IR; IR = null; detalle(c); }
+  if (IR) { const c = IR; IR = null; c(); }
 }
 function actualizando(on){ const b = document.querySelector('header .b.s'); if (b) b.textContent = on ? '…' : '↻'; }
 async function cargarAgenda(){
@@ -144,7 +144,8 @@ function badgeAgenda(){
   const n = AG.cuenta.atrasados + AG.items.filter(i => i.tipo === 'cuota' && i.dias <= 5).length;
   $('tabs').querySelector('[data-t=agenda]').innerHTML = '🔔 Agenda' + (n ? `<span class="badge">${n}</span>` : '');
 }
-function irA(bingoId, id){ if (bingoId === BID) return detalle(id); BID = bingoId; ls('set','bingo_sel',BID); IR = id; cargar(); }
+function irA(bingoId, id, pago){ const f = () => pago ? abrirPago(id) : detalle(id);
+  if (bingoId === BID && D) return f(); BID = bingoId; ls('set','bingo_sel',BID); IR = f; cargar(); }
 function aplicar(r, desde){
   if (!r.ok) { toast(r.error || 'Error'); return false; }
   D = r; CACHE[BID] = r; kpis(); render();
@@ -172,11 +173,11 @@ function kpis(){
     Corte: <b>${es.corte}</b> (${es.dias_corte > 0 ? 'en ' + es.dias_corte + ' días' : es.dias_corte === 0 ? 'HOY' : 'cerrado'}) con ${es.min} cuota(s) paga(s) ·
     Entran <b>${es.clasifican}</b> · <b>${es.no_clasifican}</b> todavía no</div>`;
   if (s.riesgo_baja) $('sorteo').innerHTML += `<div class="item" style="border-left:5px solid #b91c1c"><b style="color:#b91c1c">${s.riesgo_baja} cartón(es) en riesgo por atraso</b><div class="mut">${esc(s.aviso_mora)}</div></div>`;
-  if (s.falta_definitiva) $('sorteo').innerHTML += `<div class="item" style="border-left:5px solid #f59e0b"><b>${s.falta_definitiva} cartón(es) cancelados sin boleta definitiva</b><div class="mut">Hay que canjearla con firma y DNI antes del sorteo. Están en Pendientes.</div></div>`;
+  if (s.falta_definitiva) $('sorteo').innerHTML += `<div class="item" style="border-left:5px solid #f59e0b"><b>${s.falta_definitiva} cartón(es) cancelados sin boleta definitiva</b><div class="mut">Hay que canjearla con firma y DNI antes del sorteo. Están en la Agenda.</div></div>`;
   const n = D.interesados.filter(i => i.estado === 'NUEVO').length;
   const rec = D.compradores.filter(c => c.recordar).length;
   $('tabs').querySelector('[data-t=interesados]').innerHTML = 'Interesados' + (n ? `<span class="badge">${n}</span>` : '');
-  $('tabs').querySelector('[data-t=cobrar]').innerHTML = 'Pendientes' + (rec ? `<span class="badge">${rec}</span>` : '');
+  $('tabs').querySelector('[data-t=disp]').innerHTML = 'Disponibles' + (D.disponibles ? ` <span class="mut">(${D.disponibles.libres.length})</span>` : '');
 }
 $('tabs').querySelectorAll('button').forEach(b => b.onclick = () => {
   TAB = b.dataset.t; $('tabs').querySelectorAll('button').forEach(x => x.classList.toggle('on', x === b));
@@ -236,7 +237,8 @@ function render(){
       <div class="l1"><div><h4>${i.carton ? 'Cartón ' + esc(i.carton) + ' · ' : ''}${esc(i.nombre)}</h4>
       <div class="mut">${esc(i.bingo_nombre)} · ${esc(i.texto)}${i.fecha ? ' · ' + esc(i.fecha) : ''}</div></div>
       ${i.tipo === 'cuota' ? `<span class="tag ${i.dias <= 5 ? 'A_VENCER' : 'AL_DIA'}">${i.dias === 0 ? 'HOY' : 'en ' + i.dias + ' días'}</span>` : i.tipo === 'atrasado' ? `<span class="tag RIESGO">${esc(i.etiqueta)}</span>` : ''}</div>
-      <div class="acc">${i.wa ? `<a class="b wa" href="${i.wa}" target="_blank">WhatsApp</a>` : ''}
+      <div class="acc">${i.tipo === 'cuota' || i.tipo === 'atrasado' ? `<button class="b p" onclick="irA('${i.bingo}','${i.id}',true)">Registrar pago</button>` : ''}
+      ${i.wa ? `<a class="b wa" href="${i.wa}" target="_blank">WhatsApp</a>` : ''}
       ${i.id ? `<button class="b s" onclick="irA('${i.bingo}','${i.id}')">Ver cartón</button>` : `<button class="b s" onclick="BID='${i.bingo}';TAB='rend';cargar().then(()=>document.querySelector('[data-t=rend]').click())">Ir a rendiciones</button>`}</div></div>`;
     const g = (t, arr, nota) => arr.length ? `<h3 style="margin:16px 0 8px">${t} <span class="mut">(${arr.length})</span></h3>${nota ? `<div class="mut" style="margin:-4px 0 8px">${nota}</div>` : ''}${arr.map(it).join('')}` : '';
     const A = AG.items;
@@ -247,6 +249,15 @@ function render(){
       g('🗓️ Próximos 30 días', A.filter(i => i.tipo === 'cuota' && i.dias > 5), 'Todavía no hace falta escribirles.') +
       (AG.fechas.length ? `<h3 style="margin:16px 0 8px">📅 Fechas importantes</h3>` + AG.fechas.map(f => `<div class="item" style="border-left:5px solid ${f.color}"><b>${esc(f.fecha)}</b> · ${esc(f.bingo_nombre)}<div class="mut">${esc(f.texto)} · ${f.dias === 0 ? 'HOY' : 'en ' + f.dias + ' días'}</div></div>`).join('') : '');
     if (!A.length && !AG.fechas.length) h += '<div class="vacio">Nada pendiente por ahora 🎉</div>';
+  }
+  if (TAB === 'disp') {
+    const d = D.disponibles || { libres: [], total: 0, asignados: 0 };
+    h = `<div class="item"><h4>${d.libres.length} cartones libres <span class="mut">· ${d.asignados} vendidos · ${d.total} en total</span></h4>
+      <div class="mut">Cargá los números que te entregó el club. Podés escribirlos sueltos (0510, 0511) o por rango (0520-0540). También los podés escribir a mano en la hoja DISPONIBLES de la planilla.</div>
+      <textarea id="dTxt" rows="3" style="margin-top:8px" placeholder="Ej: 0510, 0511, 0520-0540"></textarea>
+      <div class="acc"><button class="b p" id="dBtn" onclick="cargarDisp()">Agregar números</button>
+      ${d.libres.length ? `<button class="b s" onclick="copiarLibres()">Copiar lista de libres</button>` : ''}</div></div>
+      ${d.libres.length ? `<div class="item"><h4>Libres</h4><div class="chips" style="gap:6px">${d.libres.map(n => `<span class="tag AL_DIA" style="font-size:.85rem">${esc(n)} <a href="#" onclick="borrarDisp('${esc(n)}');return false" style="color:#b91c1c;text-decoration:none;margin-left:4px">×</a></span>`).join('')}</div></div>` : '<div class="vacio">Todavía no cargaste cartones disponibles</div>'}`;
   }
   if (TAB === 'rend') {
     const s = D.resumen;
@@ -377,8 +388,11 @@ function camposBonos(){
   for (let j = 1; j <= n + reg; j++) {
     const esRegalo = reg && j % 3 === 0;
     h += `<label>${esRegalo ? '🎁 N° de cartón de REGALO (3x2)' : 'N° de cartón ' + (++pn)} <span class="mut" style="font-weight:400">(opcional, lo podés cargar después)</span></label>
-      <input class="nb ${esRegalo ? 'regalo' : ''}" inputmode="numeric" value="${esc(prev[k++] || '')}">`;
+      <input class="nb ${esRegalo ? 'regalo' : ''}" inputmode="numeric" list="libresDL" value="${esc(prev[k++] || '')}">`;
   }
+  const libres = D.disponibles ? D.disponibles.libres : [];
+  h += `<datalist id="libresDL">${libres.map(n => `<option value="${esc(n)}">`).join('')}</datalist>` +
+    (libres.length ? `<button type="button" class="b s" style="margin-top:8px" onclick="completarLibres()">Completar con cartones libres (${libres.length})</button>` : '');
   $('aBonos').innerHTML = h + (reg ? `<div class="prev">Promo 3x2: paga ${n} y lleva ${n + reg}. El cartón de regalo queda cancelado sin cuotas.</div>` : '');
 }
 async function guardarAlta(intId){
@@ -461,6 +475,29 @@ function detalleRend(){
     l.map(m => `Carton ${m.numero_bono || 's/n'} - ${m.nombre} - ${m.detalle} - ${pesos(m.monto)} (${m.medio})`).join('\n') +
     `\n\nTotal: ${pesos(l.reduce((s, m) => s + Number(m.monto), 0))} (${l.length} pagos)`;
   window.open('https://wa.me/?text=' + encodeURIComponent(txt), '_blank');
+}
+
+// ---------- DISPONIBLES ----------
+async function cargarDisp(){
+  const t = $('dTxt').value.trim(); if (!t) return toast('Escribí los números');
+  $('dBtn').disabled = true; $('dBtn').textContent = 'Guardando…';
+  const r = await api({ action: 'cargarDisponibles', clave: CLAVE, bingo: BID, texto: t });
+  if (aplicar(r)) toast(r.agregados + ' número(s) agregados'); else { $('dBtn').disabled = false; $('dBtn').textContent = 'Agregar números'; }
+}
+async function borrarDisp(n){
+  if (!confirm('¿Sacar el ' + n + ' de la lista de disponibles?')) return;
+  aplicar(await api({ action: 'borrarDisponible', clave: CLAVE, bingo: BID, numero: n }));
+}
+function copiarLibres(){
+  const txt = D.disponibles.libres.join(', ');
+  (navigator.clipboard ? navigator.clipboard.writeText(txt) : Promise.reject()).then(() => toast('Lista copiada'), () => prompt('Copiá la lista:', txt));
+}
+/** Completa los números vacíos del alta con los próximos libres */
+function completarLibres(){
+  const usados = [...document.querySelectorAll('.nb')].map(x => x.value.trim());
+  const libres = (D.disponibles ? D.disponibles.libres : []).filter(n => !usados.includes(n));
+  let k = 0; document.querySelectorAll('.nb').forEach(x => { if (!x.value.trim() && libres[k]) x.value = libres[k++]; });
+  if (!k) toast('No hay más cartones libres cargados');
 }
 
 async function borrarMov(id){
