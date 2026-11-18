@@ -111,18 +111,30 @@ async function login(){
     $('tabsB').innerHTML = BINGOS.map(b => `<button data-id="${b.id}">${esc(b.nombre.split('–')[0].trim())}</button>`).join('');
     $('tabsB').querySelectorAll('button').forEach(x => x.onclick = () => { BID = x.dataset.id; ls('set','bingo_sel',BID); cargar(); });
     cargar();
+    // Precarga los otros bingos y la agenda en paralelo, así después cambiar de bingo es instantáneo
+    BINGOS.filter(b => b.id !== BID).forEach(b => api({ action: 'datos', clave: CLAVE, bingo: b.id }).then(r => { if (r.ok) CACHE[b.id] = r; }).catch(() => {}));
+    cargarAgenda();
   } catch(e) { $('login').style.display = 'block'; $('lErr').textContent = 'Sin conexión con el servidor'; }
 }
 login();
 
+const CACHE = {};
+/** Muestra al instante lo que ya está en memoria y actualiza en segundo plano */
 async function cargar(){
-  $('tabsB').querySelectorAll('button').forEach(x => x.classList.toggle('on', x.dataset.id === BID));
+  const id = BID;
+  $('tabsB').querySelectorAll('button').forEach(x => x.classList.toggle('on', x.dataset.id === id));
   document.querySelector('header').style.background = bingo().color || '#14532d';
-  $('lista').innerHTML = '<div class="vacio">Cargando…</div>';
-  aplicar(await api({ action: 'datos', clave: CLAVE, bingo: BID }));
-  if (IR) { const id = IR; IR = null; detalle(id); }
-  cargarAgenda();
+  if (CACHE[id]) { aplicar(CACHE[id], 'cache'); if (IR) { const c = IR; IR = null; detalle(c); } }
+  else $('lista').innerHTML = '<div class="vacio">Cargando…</div>';
+  actualizando(true);
+  try {
+    const r = await api({ action: 'datos', clave: CLAVE, bingo: id });
+    if (id === BID && !$('modal').classList.contains('on')) aplicar(r, 'carga');
+    else if (r.ok) CACHE[id] = r;
+  } finally { actualizando(false); }
+  if (IR) { const c = IR; IR = null; detalle(c); }
 }
+function actualizando(on){ const b = document.querySelector('header .b.s'); if (b) b.textContent = on ? '…' : '↻'; }
 async function cargarAgenda(){
   try { const r = await api({ action: 'agenda', clave: CLAVE, dias: 30 }); if (r.ok) { AG = r; badgeAgenda(); if (TAB === 'agenda') render(); } } catch(e) {}
 }
@@ -132,9 +144,11 @@ function badgeAgenda(){
   $('tabs').querySelector('[data-t=agenda]').innerHTML = '🔔 Agenda' + (n ? `<span class="badge">${n}</span>` : '');
 }
 function irA(bingoId, id){ if (bingoId === BID) return detalle(id); BID = bingoId; ls('set','bingo_sel',BID); IR = id; cargar(); }
-function aplicar(r){
+function aplicar(r, desde){
   if (!r.ok) { toast(r.error || 'Error'); return false; }
-  D = r; kpis(); render(); return true;
+  D = r; CACHE[BID] = r; kpis(); render();
+  if (!desde) cargarAgenda();   // después de guardar algo, se actualiza la agenda
+  return true;
 }
 
 // ---------- KPIs ----------
