@@ -1,0 +1,372 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Bingos · Panel</title>
+<meta name="theme-color" content="#14532d">
+<link rel="icon" href="icon.svg">
+<link rel="manifest" href="manifest.json">
+<style>
+  :root{--v:#14532d;--v2:#16a34a;--r:#dc2626;--am:#f59e0b;--g:#e5e7eb;--mut:#64748b}
+  *{box-sizing:border-box}body{margin:0;font-family:system-ui,-apple-system,Arial,sans-serif;background:#f1f5f0;color:#0f172a;padding-bottom:40px}
+  header{background:var(--v);color:#fff;padding:12px 14px calc(10px) ;position:sticky;top:0;z-index:5}
+  header h1{margin:0;font-size:1.15rem;display:flex;justify-content:space-between;align-items:center}
+  .tabsB{display:flex;gap:8px;margin-top:10px;overflow-x:auto}
+  .tabsB button{flex:1;min-width:130px;border:0;border-radius:10px;padding:10px;font-weight:700;background:#ffffff22;color:#fff;cursor:pointer}
+  .tabsB button.on{background:#fff;color:var(--v)}
+  main{max-width:980px;margin:auto;padding:12px}
+  .kpis{display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:10px}
+  .kpi{background:#fff;border-radius:14px;padding:12px;box-shadow:0 2px 10px #0001}
+  .kpi small{color:var(--mut);font-size:.78rem;display:block}.kpi b{font-size:1.25rem}
+  .kpi.r b{color:var(--r)}.kpi.v b{color:var(--v2)}
+  .tabs{display:flex;gap:6px;margin:14px 0 10px;overflow-x:auto}
+  .tabs button{border:0;background:#fff;border-radius:99px;padding:9px 14px;font-weight:600;cursor:pointer;white-space:nowrap;box-shadow:0 1px 4px #0001}
+  .tabs button.on{background:var(--v);color:#fff}
+  .badge{background:var(--r);color:#fff;border-radius:99px;padding:1px 7px;font-size:.75rem;margin-left:4px}
+  .item{background:#fff;border-radius:14px;padding:12px;margin-bottom:10px;box-shadow:0 2px 8px #0001}
+  .item .l1{display:flex;justify-content:space-between;gap:8px;align-items:flex-start}
+  .item h4{margin:0;font-size:1rem}.mut{color:var(--mut);font-size:.85rem}
+  .sorteo{background:linear-gradient(135deg,#14532d,#16a34a);color:#fff;border-radius:14px;padding:12px 14px;margin-bottom:10px}
+  .sorteo b{font-size:1.05rem}.sorteo small{opacity:.9}
+  .RIESGO{background:#b91c1c;color:#fff}.si{color:#15803d;font-weight:700}.no{color:#b91c1c;font-weight:700}
+  .tag{font-size:.72rem;font-weight:800;padding:4px 8px;border-radius:99px;white-space:nowrap}
+  .ATRASADO{background:#fee2e2;color:#b91c1c}.A_VENCER{background:#fef3c7;color:#92400e}.AL_DIA{background:#e0f2fe;color:#075985}.CANCELADO{background:#dcfce7;color:#166534}
+  .chips{display:flex;flex-wrap:wrap;gap:4px;margin:8px 0}
+  .chip{width:26px;height:26px;border-radius:6px;font-size:.72rem;display:flex;align-items:center;justify-content:center;font-weight:700}
+  .chip.P{background:#86efac}.chip.V{background:#fca5a5}.chip.F{background:var(--g);color:#475569}
+  .acc{display:flex;gap:6px;flex-wrap:wrap;margin-top:8px}
+  .b{border:0;border-radius:10px;padding:9px 12px;font-weight:700;cursor:pointer;font-size:.88rem;text-decoration:none;display:inline-block}
+  .b.wa{background:#25d366;color:#fff}.b.p{background:var(--v2);color:#fff}.b.s{background:#e2e8f0;color:#0f172a}.b.r{background:#fee2e2;color:#b91c1c}
+  input,select,textarea{width:100%;padding:11px;border:1px solid #cbd5e1;border-radius:10px;font-size:1rem;background:#fff}
+  label{display:block;font-size:.85rem;font-weight:600;margin:10px 0 4px}
+  .row2{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+  .fab{position:fixed;right:18px;bottom:22px;background:var(--v2);color:#fff;border:0;border-radius:99px;padding:15px 20px;font-weight:800;font-size:1rem;box-shadow:0 6px 18px #0004;cursor:pointer;z-index:6}
+  .modal{position:fixed;inset:0;background:#0007;display:none;align-items:flex-end;justify-content:center;z-index:20}
+  .modal.on{display:flex}
+  .sheet{background:#fff;width:100%;max-width:560px;max-height:92vh;overflow:auto;border-radius:18px 18px 0 0;padding:18px}
+  @media(min-width:700px){.modal{align-items:center}.sheet{border-radius:18px}}
+  .sheet h3{margin:0 0 6px}.cerrar{float:right;background:none;border:0;font-size:1.5rem;cursor:pointer}
+  .prev{background:#f0fdf4;border-radius:10px;padding:10px;margin-top:10px;font-size:.92rem}
+  .regalo{background:#dcfce7}
+  #login{max-width:340px;margin:80px auto;text-align:center}
+  .toast{position:fixed;left:50%;bottom:90px;transform:translateX(-50%);background:#0f172a;color:#fff;padding:10px 16px;border-radius:10px;display:none;z-index:30}
+  .vacio{text-align:center;color:var(--mut);padding:30px}
+</style>
+</head>
+<body>
+<div id="login" style="display:none">
+  <h2>Bingos · Panel</h2>
+  <p class="mut">Ingresá la clave del panel (te la da el setup).</p>
+  <input id="clave" type="password" inputmode="numeric" placeholder="Clave">
+  <button class="b p" style="width:100%;margin-top:10px;padding:13px" onclick="login()">Entrar</button>
+  <p id="lErr" style="color:#b91c1c"></p>
+</div>
+
+<div id="app" style="display:none">
+  <header>
+    <h1><span>🎱 Bingos</span><span><button class="b s" onclick="cargar()">↻</button></span></h1>
+    <div class="tabsB" id="tabsB"></div>
+  </header>
+  <main>
+    <div id="sorteo"></div>
+    <div class="kpis" id="kpis"></div>
+    <div class="tabs" id="tabs">
+      <button data-t="cobrar" class="on">Pendientes</button>
+      <button data-t="bonos">Cartones</button>
+      <button data-t="interesados">Interesados</button>
+      <button data-t="movs">Movimientos</button>
+    </div>
+    <div id="buscar" style="display:none;margin-bottom:10px"><input id="q" placeholder="Buscar por nombre, DNI, teléfono o N° de cartón" oninput="render()"></div>
+    <div id="lista"></div>
+  </main>
+  <button class="fab" onclick="abrirAlta()">+ Nuevo cartón</button>
+</div>
+
+<div class="modal" id="modal" onclick="if(event.target===this)cerrar()"><div class="sheet" id="sheet"></div></div>
+<div class="toast" id="toast"></div>
+
+<script src="config.js"></script>
+<script>
+let CLAVE = ls('get', 'bingo_clave') || '', BINGOS = [], BID = ls('get', 'bingo_sel') || '', D = null, TAB = 'cobrar';
+function ls(op, k, v){ try { return op === 'get' ? localStorage.getItem(k) : localStorage.setItem(k, v); } catch(e){ return null; } }
+const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+function toast(t){ const e = $('toast'); e.textContent = t; e.style.display = 'block'; setTimeout(() => e.style.display = 'none', 2600); }
+function cerrar(){ $('modal').classList.remove('on'); }
+function abrir(html){ $('sheet').innerHTML = '<button class="cerrar" onclick="cerrar()">×</button>' + html; $('modal').classList.add('on'); }
+const bingo = () => BINGOS.find(b => b.id === BID);
+
+// ---------- LOGIN ----------
+async function login(){
+  if ($('clave').value) CLAVE = $('clave').value.trim();
+  if (!CLAVE) { $('login').style.display = 'block'; return; }
+  try {
+    const r = await api({ action: 'login', clave: CLAVE });
+    if (!r.ok) { $('login').style.display = 'block'; $('lErr').textContent = r.msg || r.error; return; }
+    ls('set', 'bingo_clave', CLAVE);
+    BINGOS = r.bingos; if (!BINGOS.some(b => b.id === BID)) BID = BINGOS[0].id;
+    $('login').style.display = 'none'; $('app').style.display = 'block';
+    $('tabsB').innerHTML = BINGOS.map(b => `<button data-id="${b.id}">${esc(b.nombre.split('–')[0].trim())}</button>`).join('');
+    $('tabsB').querySelectorAll('button').forEach(x => x.onclick = () => { BID = x.dataset.id; ls('set','bingo_sel',BID); cargar(); });
+    cargar();
+  } catch(e) { $('login').style.display = 'block'; $('lErr').textContent = 'Sin conexión con el servidor'; }
+}
+login();
+
+async function cargar(){
+  $('tabsB').querySelectorAll('button').forEach(x => x.classList.toggle('on', x.dataset.id === BID));
+  document.querySelector('header').style.background = bingo().color || '#14532d';
+  $('lista').innerHTML = '<div class="vacio">Cargando…</div>';
+  aplicar(await api({ action: 'datos', clave: CLAVE, bingo: BID }));
+}
+function aplicar(r){
+  if (!r.ok) { toast(r.error || 'Error'); return false; }
+  D = r; kpis(); render(); return true;
+}
+
+// ---------- KPIs ----------
+function kpis(){
+  const s = D.resumen;
+  $('kpis').innerHTML = `
+    <div class="kpi"><small>Cartones vendidos</small><b>${s.bonos}</b>${s.bonificados ? `<small>${s.bonificados} de regalo 3x2</small>` : ''}</div>
+    <div class="kpi v"><small>Cobrado</small><b>${pesos(s.recaudado)}</b><small>Ef. ${pesos(s.efectivo)} · Transf. ${pesos(s.transferencia)}</small></div>
+    <div class="kpi r"><small>Deuda vencida</small><b>${pesos(s.deuda_vencida)}</b><small>${s.atrasados} bonos atrasados</small></div>
+    <div class="kpi"><small>Falta cobrar (total)</small><b>${pesos(s.por_cobrar)}</b><small>${s.cancelados} cancelados</small></div>`;
+  const so = s.sorteo;
+  $('sorteo').innerHTML = so ? `<div class="sorteo"><b>Sorteo mensual ${so.numero}/${so.total} · ${so.fecha}</b>
+    <small>${so.dias === 0 ? 'HOY' : 'en ' + so.dias + ' días'} · ${esc(so.fuente)}</small><br>
+    <small>${esc(so.premios)}</small><br>
+    Participan <b>${so.participan}</b> bonos · <b>${so.no_participan}</b> todavía no pagaron la cuota de este sorteo</div>` : '';
+  const es = s.especial;
+  if (es) $('sorteo').innerHTML += `<div class="sorteo" style="background:linear-gradient(135deg,#991b1b,#dc2626)"><b>Sorteo Especial de ${esc(es.nombre)} · ${es.sorteo}</b>
+    <small>· ${esc(es.fuente)}</small><br><small>${esc(es.premios)}</small><br>
+    Corte: <b>${es.corte}</b> (${es.dias_corte > 0 ? 'en ' + es.dias_corte + ' días' : es.dias_corte === 0 ? 'HOY' : 'cerrado'}) con ${es.min} cuota(s) paga(s) ·
+    Entran <b>${es.clasifican}</b> · <b>${es.no_clasifican}</b> todavía no</div>`;
+  if (s.riesgo_baja) $('sorteo').innerHTML += `<div class="item" style="border-left:5px solid #b91c1c"><b style="color:#b91c1c">${s.riesgo_baja} bono(s) en riesgo por atraso</b><div class="mut">${esc(s.aviso_mora)}</div></div>`;
+  if (s.falta_definitiva) $('sorteo').innerHTML += `<div class="item" style="border-left:5px solid #f59e0b"><b>${s.falta_definitiva} bono(s) cancelados sin boleta definitiva</b><div class="mut">Hay que canjearla con firma y DNI antes del sorteo. Están en Pendientes.</div></div>`;
+  const n = D.interesados.filter(i => i.estado === 'NUEVO').length;
+  const rec = D.compradores.filter(c => c.recordar).length;
+  $('tabs').querySelector('[data-t=interesados]').innerHTML = 'Interesados' + (n ? `<span class="badge">${n}</span>` : '');
+  $('tabs').querySelector('[data-t=cobrar]').innerHTML = 'Pendientes' + (rec ? `<span class="badge">${rec}</span>` : '');
+}
+$('tabs').querySelectorAll('button').forEach(b => b.onclick = () => {
+  TAB = b.dataset.t; $('tabs').querySelectorAll('button').forEach(x => x.classList.toggle('on', x === b));
+  $('buscar').style.display = TAB === 'bonos' || TAB === 'movs' ? 'block' : 'none'; render();
+});
+
+// ---------- LISTAS ----------
+function chips(c){ return `<div class="chips">${c.grilla.map(g => `<div class="chip ${g.estado}" title="Cuota ${g.n} · vence ${g.vence} · ${pesos(g.monto)}">${g.n}</div>`).join('')}</div>`; }
+function tarjeta(c){
+  return `<div class="item">
+    <div class="l1"><div><h4>Cartón ${esc(c.numero_bono)} · ${esc(c.nombre)}</h4>
+      <div class="mut">${esc(c.telefono)}${c.localidad ? ' · ' + esc(c.localidad) : ''} · ${c.pagadas}/${c.total} cuotas · pagó ${pesos(c.pagado)}</div></div>
+      <span class="tag ${c.mora ? 'RIESGO' : c.falta_definitiva ? 'A_VENCER' : c.estado}">${c.etiqueta}</span></div>
+    ${chips(c)}
+    ${c.especial && !c.especial.cerrado && c.estado !== 'CANCELADO' ? `<div class="mut">Especial ${esc(c.especial.nombre)} (corte ${c.especial.corte}): ${c.especial.clasifica ? '<span class="si">entra</span>' : `<span class="no">le falta${c.especial.faltan > 1 ? 'n' : ''} ${c.especial.faltan} cuota${c.especial.faltan > 1 ? 's' : ''}</span>`}</div>` : ''}
+    ${c.sorteo && c.estado !== 'CANCELADO' ? `<div class="mut">Sorteo mensual ${c.sorteo.fecha}: ${c.sorteo.participa ? '<span class="si">participa</span>' : '<span class="no">NO participa (falta pagar)</span>'}</div>` : ''}
+    ${c.deuda ? `<div class="mut" style="color:#b91c1c"><b>Debe ${pesos(c.deuda)}</b> (${c.cuotas_vencidas} vencida${c.cuotas_vencidas > 1 ? 's' : ''})</div>` :
+      c.prox_venc ? `<div class="mut">Próxima: cuota ${c.prox_cuota} · ${pesos(c.prox_monto)} · vence ${c.prox_venc}</div>` : ''}
+    <div class="acc">
+      ${c.estado !== 'CANCELADO' ? `<button class="b p" onclick="abrirPago('${c.id}')">Registrar pago</button>` : ''}
+      ${c.falta_definitiva ? `<button class="b p" onclick="marcarDefinitiva('${c.id}')">Entregué boleta definitiva</button>` : ''}
+      <a class="b wa" href="${c.wa}" target="_blank">WhatsApp</a>
+      <button class="b s" onclick="detalle('${c.id}')">Ver</button>
+    </div></div>`;
+}
+function render(){
+  if (!D) return;
+  const q = ($('q').value || '').toLowerCase().trim();
+  const match = o => !q || Object.values(o).some(v => typeof v !== 'object' && String(v).toLowerCase().includes(q));
+  let h = '';
+  if (TAB === 'cobrar') {
+    const l = D.compradores.filter(c => c.recordar).sort((a, b) => b.deuda - a.deuda || (a.dias ?? 99) - (b.dias ?? 99));
+    h = l.length ? `<p class="mut">Cuotas vencidas o que vencen en 5 días, bonos a los que les falta cuota para un sorteo especial que cierra en 7 días y cancelados sin boleta definitiva. Los que adelantaron cuotas no aparecen hasta su próximo vencimiento.</p>` + l.map(tarjeta).join('')
+                 : '<div class="vacio">Nadie para cobrar por ahora 🎉</div>';
+  }
+  if (TAB === 'bonos') {
+    const l = D.compradores.filter(match).sort((a, b) => String(a.numero_bono).localeCompare(String(b.numero_bono), undefined, { numeric: true }));
+    h = l.map(tarjeta).join('') || '<div class="vacio">Sin bonos cargados</div>';
+  }
+  if (TAB === 'interesados') {
+    h = D.interesados.map(i => `<div class="item">
+      <div class="l1"><div><h4>${esc(i.nombre)}</h4>
+        <div class="mut">${esc(i.fecha)} · DNI ${esc(i.dni || '-')} · ${esc(i.telefono)}<br>${esc(i.direccion || '')} · ${esc(i.localidad || '')}, ${esc(i.provincia || '')}</div>
+        <div class="mut">Quiere <b>${esc(i.cantidad)} cartón(es)</b> · ${esc(i.modalidad)} · origen: ${esc(i.origen)}</div></div>
+        <span class="tag ${i.estado === 'NUEVO' ? 'ATRASADO' : 'AL_DIA'}">${i.estado}</span></div>
+      <div class="acc">
+        <a class="b wa" href="${i.wa}" target="_blank" onclick="marcarInt('${i.id}','CONTACTADO',true)">WhatsApp</a>
+        <button class="b p" onclick="abrirAlta('${i.id}')">Dar de alta</button>
+        <button class="b r" onclick="marcarInt('${i.id}','DESCARTADO')">Descartar</button>
+      </div></div>`).join('') || '<div class="vacio">Sin interesados nuevos</div>';
+  }
+  if (TAB === 'movs') {
+    h = D.movimientos.filter(match).map(m => `<div class="item"><div class="l1"><div>
+      <h4>${pesos(m.monto)} · ${esc(m.nombre)}</h4><div class="mut">${esc(m.fecha)} · Bono ${esc(m.numero_bono)} · ${esc(m.detalle)} · ${esc(m.medio)} ${m.observacion ? '· ' + esc(m.observacion) : ''}</div></div>
+      <button class="b r" onclick="borrarMov('${m.id}')">Borrar</button></div></div>`).join('') || '<div class="vacio">Sin movimientos</div>';
+  }
+  $('lista').innerHTML = h;
+}
+
+// ---------- DETALLE ----------
+function detalle(id){
+  const c = D.compradores.find(x => x.id === id);
+  const otros = D.compradores.filter(x => x.id !== id && x.dni && x.dni === c.dni);
+  const movs = D.movimientos.filter(m => m.comprador_id === id);
+  abrir(`<h3>Cartón N° ${esc(c.numero_bono)}</h3><span class="tag ${c.estado}">${c.etiqueta}</span>
+    <p>${esc(c.nombre)} · DNI ${esc(c.dni)}<br>${esc(c.telefono)}<br>${esc(c.direccion)} · ${esc(c.localidad)}, ${esc(c.provincia)}<br>
+    <span class="mut">Alta ${esc(c.fecha_alta)} · ${esc(c.modalidad)} ${c.origen ? '· origen ' + esc(c.origen) : ''} ${c.notas ? '<br>Notas: ' + esc(c.notas) : ''}</span></p>
+    ${otros.length ? `<p class="mut">Otros cartones de esta persona: ${otros.map(o => 'N° ' + esc(o.numero_bono) + (o.bonificado === 'SI' ? ' (regalo)' : '')).join(', ')}</p>` : ''}
+    <table style="width:100%;font-size:.88rem;border-collapse:collapse">${c.grilla.map(g => `<tr style="border-bottom:1px solid #eee">
+      <td><span class="chip ${g.estado}" style="display:inline-flex">${g.n}</span></td><td>${g.vence}</td><td>${pesos(g.monto)}</td>
+      <td>${g.estado === 'P' ? 'Pagada' : g.estado === 'V' ? '<b style="color:#b91c1c">Vencida</b>' : 'Pendiente'}</td></tr>`).join('')}</table>
+    ${c.especiales && c.especiales.length ? `<h4>Sorteos especiales</h4>${c.especiales.map(e => `<div class="mut">${esc(e.nombre)} ${e.sorteo} (corte ${e.corte}, ${e.todo ? 'todo pago' : e.min + ' cuotas'}): ${e.clasifica ? '<span class="si">' + (e.cerrado ? 'participó' : 'entra') + '</span>' : e.cerrado ? 'no participó' : '<span class="no">faltan ' + e.faltan + '</span>'}</div>`).join('')}` : ''}
+    ${c.boleta_definitiva ? `<p class="mut">Boleta definitiva entregada el ${esc(c.boleta_definitiva)}</p>` : ''}
+    <h4>Pagos</h4>${movs.map(m => `<div class="mut">${esc(m.fecha)} · ${esc(m.detalle)} · ${pesos(m.monto)} · ${esc(m.medio)}</div>`).join('') || '<div class="mut">Sin pagos</div>'}
+    <div class="acc" style="margin-top:14px">
+      ${c.estado !== 'CANCELADO' ? `<button class="b p" onclick="abrirPago('${c.id}')">Registrar pago</button>` : ''}
+      <a class="b wa" href="${c.wa}" target="_blank">WhatsApp</a>
+      <button class="b s" onclick="abrirEditar('${c.id}')">Editar</button>
+    </div>`);
+}
+
+// ---------- PAGO ----------
+function abrirPago(id){
+  const c = D.compradores.find(x => x.id === id);
+  const resto = c.total - c.pagadas;
+  const otros = D.compradores.filter(x => x.id !== id && x.dni && x.dni === c.dni && x.estado !== 'CANCELADO');
+  abrir(`<h3>Registrar pago</h3><div class="mut">Cartón N° ${esc(c.numero_bono)} · ${esc(c.nombre)} · ${c.pagadas}/${c.total} pagas</div>
+    <label>¿Cuántas cuotas paga?</label>
+    <select id="pCuotas" onchange="prevPago('${id}')">
+      ${Array.from({ length: resto }, (_, i) => i + 1).map(n => `<option value="${n === resto ? 'contado' : n}" ${c.cuotas_vencidas && n === c.cuotas_vencidas ? 'selected' : ''}>
+        ${n === resto ? (c.pagadas ? `Cancela todo (${n} cuotas)` : 'CONTADO (todas)') : n + (n === 1 ? ' cuota' : ' cuotas')}${c.cuotas_vencidas && n === c.cuotas_vencidas ? ' · lo vencido' : ''}</option>`).join('')}
+    </select>
+    <div class="row2"><div><label>Medio</label><select id="pMedio"><option>Efectivo</option><option>Transferencia</option></select></div>
+      <div><label>Fecha</label><input id="pFecha" type="date" value="${new Date().toLocaleDateString('sv')}"></div></div>
+    <label>Monto por cartón</label><input id="pMonto" type="number" inputmode="numeric">
+    ${otros.length ? `<label style="font-weight:400;display:flex;gap:8px;align-items:center"><input type="checkbox" id="pGrupo" style="width:auto" onchange="prevPago('${id}')"> Aplicar también a sus otros cartones (${otros.map(o => 'N° ' + esc(o.numero_bono)).join(', ')})</label>` : ''}
+    <label>Observación</label><input id="pObs" placeholder="opcional">
+    <div class="prev" id="pPrev"></div>
+    <button class="b p" style="width:100%;margin-top:12px;padding:14px" id="pBtn" onclick="guardarPago('${id}')">Guardar pago</button>`);
+  prevPago(id);
+}
+function prevPago(id){
+  const c = D.compradores.find(x => x.id === id);
+  const v = $('pCuotas').value, n = v === 'contado' ? c.total - c.pagadas : +v;
+  const g = c.grilla.slice(c.pagadas, c.pagadas + n);
+  const monto = g.reduce((s, x) => s + x.monto, 0);
+  $('pMonto').value = monto;
+  const sig = c.grilla[c.pagadas + n];
+  const bonos = 1 + ($('pGrupo') && $('pGrupo').checked ? D.compradores.filter(x => x.id !== id && x.dni === c.dni && x.estado !== 'CANCELADO').length : 0);
+  $('pPrev').innerHTML = `Cubre ${n === 1 ? 'la cuota ' + g[0].n : 'cuotas ' + g[0].n + ' a ' + g[n - 1].n} (vencimientos ${g[0].vence}${n > 1 ? ' a ' + g[n - 1].vence : ''}).<br>
+    <b>Total: ${pesos(monto * bonos)}</b>${bonos > 1 ? ` (${bonos} bonos)` : ''}<br>
+    ${sig ? `El próximo recordatorio sale para la cuota ${sig.n}, que vence el <b>${sig.vence}</b>.` : '<b>Queda CANCELADO.</b>'}`;
+}
+async function guardarPago(id){
+  const c = D.compradores.find(x => x.id === id);
+  const ids = [id].concat($('pGrupo') && $('pGrupo').checked ? D.compradores.filter(x => x.id !== id && x.dni === c.dni && x.estado !== 'CANCELADO').map(x => x.id) : []);
+  $('pBtn').disabled = true; $('pBtn').textContent = 'Guardando…';
+  const r = await api({ action: 'pago', clave: CLAVE, bingo: BID, comprador_ids: ids, cuotas: $('pCuotas').value,
+    medio: $('pMedio').value, fecha: $('pFecha').value, monto_por_bono: $('pMonto').value, observacion: $('pObs').value });
+  if (!aplicar(r)) { $('pBtn').disabled = false; $('pBtn').textContent = 'Guardar pago'; return; }
+  confirmarWA(ids, 'pago');
+}
+/** Después de guardar, ofrece mandar el comprobante por WhatsApp */
+function confirmarWA(ids, tipo){
+  const bs = D.compradores.filter(x => ids.includes(x.id));
+  const c = bs[0], b = bingo();
+  const linea = bs.map(x => `Carton N° ${x.numero_bono}: ${x.bonificado === 'SI' ? 'REGALO 3x2' : x.pagadas + '/' + x.total + ' cuotas' + (x.estado === 'CANCELADO' ? ' - CANCELADO' : ' - proximo vencimiento ' + x.prox_venc)}`).join('\n');
+  const txt = `Hola ${c.nombre.split(' ')[0]}! ${tipo === 'alta' ? 'Ya quedaste anotado en el ' : 'Recibi tu pago del '}${b.nombre.split(' – ')[0]}.\n${linea}\nAlias para pagar: ${b.alias}. Gracias!`;
+  const link = c.wa.split('?')[0] + '?text=' + encodeURIComponent(txt);
+  abrir(`<h3>✅ Guardado</h3><p>${esc(c.nombre)}</p><pre style="white-space:pre-wrap;background:#f1f5f9;padding:10px;border-radius:10px;font-size:.85rem">${esc(txt)}</pre>
+    <a class="b wa" style="width:100%;text-align:center;padding:14px" href="${link}" target="_blank" onclick="cerrar()">Enviar comprobante por WhatsApp</a>
+    <button class="b s" style="width:100%;margin-top:8px" onclick="cerrar()">Cerrar</button>`);
+}
+
+// ---------- ALTA (se autocompleta desde un interesado) ----------
+function abrirAlta(intId){
+  const i = intId ? D.interesados.find(x => x.id === intId) : {};
+  const b = bingo();
+  abrir(`<h3>Nuevo cartón · ${esc(b.nombre.split('–')[0])}</h3>
+    ${intId ? '<div class="mut">Datos completados desde la web</div>' : ''}
+    <div class="row2"><div><label>Nombre *</label><input id="aNom" value="${esc(i.nombre_solo || '')}"></div>
+      <div><label>Apellido *</label><input id="aApe" value="${esc(i.apellido || '')}"></div></div>
+    <div class="row2"><div><label>DNI *</label><input id="aDni" inputmode="numeric" value="${esc(i.dni || '')}"></div>
+      <div><label>Teléfono *</label><input id="aTel" inputmode="tel" value="${esc(i.telefono || '')}"></div></div>
+    <label>Dirección *</label><input id="aDir" value="${esc(i.direccion || '')}">
+    <div class="row2"><div><label>Localidad *</label><input id="aLoc" value="${esc(i.localidad || '')}"></div>
+      <div><label>Provincia *</label><input id="aProv" value="${esc(i.provincia || 'Santa Fe')}"></div></div>
+    <label>Fecha de venta (la que va en la boleta)</label><input id="aFecha" type="date" value="${new Date().toLocaleDateString('sv')}">
+    <label>Cartones que paga</label><select id="aCant" onchange="camposBonos()">${[1,2,3,4,5,6].map(n => `<option ${n == (b.promo_3x2 ? Math.ceil((i.cantidad || 1) * 2 / 3) : (i.cantidad || 1)) ? 'selected' : ''}>${n}</option>`).join('')}</select>
+    <div id="aBonos"></div>
+    <label>Modalidad</label><select id="aMod">${['Cuota a cuota','Varias cuotas juntas','Contado'].map(m => `<option ${m === i.modalidad ? 'selected' : ''}>${m}</option>`).join('')}</select>
+    <label>Pago ahora</label><select id="aPago">
+      <option value="">No paga todavía</option>
+      ${D.cuotas.map((_, k) => k + 1).map(n => `<option value="${n === D.cuotas.length ? 'contado' : n}" ${n === 1 ? 'selected' : ''}>${n === D.cuotas.length ? 'CONTADO ' + pesos(b.precio) : n + ' cuota' + (n > 1 ? 's' : '') + ' · ' + pesos(D.cuotas.slice(0, n).reduce((s, x) => s + x, 0))}</option>`).join('')}
+    </select>
+    <div class="row2"><div><label>Medio</label><select id="aMedio"><option>Efectivo</option><option>Transferencia</option></select></div>
+      <div><label>Notas</label><input id="aNotas"></div></div>
+    <button class="b p" style="width:100%;margin-top:14px;padding:14px" id="aBtn" onclick="guardarAlta('${intId || ''}')">Dar de alta</button>`);
+  if (i.modalidad === 'Contado') $('aPago').value = 'contado';
+  camposBonos();
+}
+function camposBonos(){
+  const n = +$('aCant').value, reg = bingo().promo_3x2 ? Math.floor(n / 2) : 0;
+  const prev = [...document.querySelectorAll('.nb')].map(x => x.value);
+  let h = '', k = 0, pn = 0;
+  for (let j = 1; j <= n + reg; j++) {
+    const esRegalo = reg && j % 3 === 0;
+    h += `<label>${esRegalo ? '🎁 N° de cartón de REGALO (3x2)' : 'N° de cartón ' + (++pn)}</label>
+      <input class="nb ${esRegalo ? 'regalo' : ''}" inputmode="numeric" value="${esc(prev[k++] || '')}">`;
+  }
+  $('aBonos').innerHTML = h + (reg ? `<div class="prev">Promo 3x2: paga ${n} y lleva ${n + reg}. El cartón de regalo queda cancelado sin cuotas.</div>` : '');
+}
+async function guardarAlta(intId){
+  const bonos = [...document.querySelectorAll('.nb')].map(x => x.value.trim());
+  const req = [['aNom','Nombre'],['aApe','Apellido'],['aDni','DNI'],['aTel','Teléfono'],['aDir','Dirección'],['aLoc','Localidad'],['aProv','Provincia']];
+  const falta = req.find(([id]) => !$(id).value.trim());
+  if (falta) { $(falta[0]).focus(); return toast('Falta: ' + falta[1]); }
+  if (bonos.some(x => !x)) return toast('Completá todos los números de cartón');
+  $('aBtn').disabled = true; $('aBtn').textContent = 'Guardando…';
+  const it = intId ? D.interesados.find(x => x.id === intId) : null;
+  const r = await api({ action: 'alta', clave: CLAVE, bingo: BID, interesado_id: intId, nombre: $('aNom').value.trim(), apellido: $('aApe').value.trim(), dni: $('aDni').value.trim(),
+    telefono: $('aTel').value.trim(), direccion: $('aDir').value.trim(), localidad: $('aLoc').value.trim(), provincia: $('aProv').value.trim(), fecha_alta: $('aFecha').value, modalidad: $('aMod').value,
+    notas: $('aNotas').value, origen: it ? it.origen : 'manual', bonos,
+    pago: $('aPago').value ? { cuotas: $('aPago').value, medio: $('aMedio').value, fecha: $('aFecha').value } : null });
+  if (!aplicar(r)) { $('aBtn').disabled = false; $('aBtn').textContent = 'Dar de alta'; return; }
+  const ids = D.compradores.filter(c => bonos.includes(String(c.numero_bono))).map(c => c.id);
+  confirmarWA(ids, 'alta');
+}
+
+// ---------- EDITAR / BORRAR / INTERESADOS ----------
+function abrirEditar(id){
+  const c = D.compradores.find(x => x.id === id);
+  const f = (k, l, t = 'text') => `<label>${l}</label><input id="e_${k}" type="${t}" value="${esc(k === 'nombre' ? c.nombre_solo : c[k])}">`;
+  abrir(`<h3>Editar cartón</h3>${f('numero_bono','N° de cartón')}${f('nombre','Nombre')}${f('apellido','Apellido')}${f('dni','DNI')}${f('telefono','Teléfono')}${f('direccion','Dirección')}${f('localidad','Localidad')}${f('provincia','Provincia')}
+    ${f('fecha_alta','Fecha de alta (AAAA-MM-DD)')}${f('notas','Notas')}
+    <button class="b p" style="width:100%;margin-top:14px;padding:13px" onclick="guardarEditar('${id}')">Guardar</button>
+    <button class="b r" style="width:100%;margin-top:8px" onclick="if(confirm('¿Dar de baja este cartón? (queda en la planilla con activo=NO)'))guardarEditar('${id}',true)">Dar de baja</button>`);
+}
+async function guardarEditar(id, baja){
+  const campos = baja ? { activo: 'NO' } : {};
+  if (!baja) ['numero_bono','nombre','apellido','dni','telefono','direccion','localidad','provincia','fecha_alta','notas'].forEach(k => campos[k] = $('e_' + k).value.trim());
+  if (aplicar(await api({ action: 'editarComprador', clave: CLAVE, bingo: BID, id, campos }))) { cerrar(); toast('Guardado'); }
+}
+async function marcarDefinitiva(id){
+  if (!confirm('¿Confirmás que entregaste la boleta definitiva firmada?')) return;
+  if (aplicar(await api({ action: 'definitiva', clave: CLAVE, bingo: BID, id }))) toast('Boleta definitiva registrada');
+}
+async function borrarMov(id){
+  if (!confirm('¿Borrar este pago?')) return;
+  if (aplicar(await api({ action: 'borrarMov', clave: CLAVE, bingo: BID, id }))) toast('Pago borrado');
+}
+async function marcarInt(id, estado, silencioso){
+  const i = D.interesados.find(x => x.id === id);
+  if (silencioso && i.estado !== 'NUEVO') return;
+  if (!silencioso && !confirm('¿Descartar interesado?')) return;
+  aplicar(await api({ action: 'estadoInteresado', clave: CLAVE, bingo: BID, id, estado }));
+}
+
+if ('serviceWorker' in navigator) navigator.serviceWorker.register('sw.js').catch(() => {});
+</script>
+</body>
+</html>

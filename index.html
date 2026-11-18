@@ -1,0 +1,231 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Bingos 2027 · Reservá tu bono en cuotas</title>
+<meta name="description" content="Bingo Interefa 2027 y El Bingo Más Grande de Platense Porvenir. Autos 0 km, lanchas, motos y órdenes de compra. Pagalo en cuotas.">
+<meta property="og:title" content="Reservá tu Bingo 2027 en cuotas">
+<meta property="og:description" content="Autos 0 km, lanchas, motos y órdenes de compra. Pagalo cuota a cuota o de contado.">
+<meta name="theme-color" content="#14532d">
+<link rel="icon" href="icon.svg">
+<meta property="og:image" content="logo-cuadrado.png">
+<style>
+  *{box-sizing:border-box}body{margin:0;font-family:system-ui,-apple-system,Arial,sans-serif;background:#f1f5f0;color:#0f172a}
+  header{background:linear-gradient(135deg,#14532d,#16a34a);color:#fff;text-align:center;padding:34px 16px 28px}
+  header h1{margin:0;font-size:2rem;letter-spacing:-.5px}header p{margin:.5rem auto 0;max-width:560px;opacity:.92}
+  main{max-width:1000px;margin:auto;padding:18px 14px}
+  .grid{display:grid;gap:18px;grid-template-columns:repeat(auto-fit,minmax(300px,1fr))}
+  .card{background:#fff;border-radius:18px;overflow:hidden;box-shadow:0 4px 18px #0001;border:3px solid transparent;transition:.2s}
+  .card.sel{border-color:#16a34a;transform:translateY(-2px)}
+  .top{padding:18px;color:#fff}.top h2{margin:0;font-size:1.35rem}.top small{opacity:.9}
+  .body{padding:16px}.premios{line-height:1.45}
+  .promo{background:#fef3c7;border-left:5px solid #f59e0b;padding:10px 12px;border-radius:8px;margin:12px 0;font-size:.92rem;font-weight:600}
+  .promo .cd{color:#dc2626;display:block;margin-top:4px}
+  .precio{font-size:1.7rem;font-weight:800;color:#14532d;margin-top:8px}.mut{color:#64748b;font-size:.88rem}
+  .btn{display:block;width:100%;text-align:center;border:0;border-radius:12px;padding:14px;font-size:1.05rem;font-weight:700;cursor:pointer;background:#16a34a;color:#fff;margin-top:12px;text-decoration:none}
+  .btn.wa{background:#25d366}.btn:disabled{opacity:.6}
+  form{background:#fff;border-radius:18px;padding:20px;margin-top:22px;display:none;box-shadow:0 4px 18px #0001}
+  label{display:block;margin:12px 0 5px;font-size:.9rem;font-weight:600}
+  input,select{width:100%;padding:12px;border-radius:10px;border:1px solid #cbd5e1;font-size:1rem;background:#fff}
+  .opts{display:grid;gap:8px;grid-template-columns:repeat(auto-fit,minmax(140px,1fr))}
+  .opt{border:2px solid #cbd5e1;border-radius:12px;padding:10px;text-align:center;cursor:pointer;font-size:.92rem}
+  .opt.on{border-color:#16a34a;background:#f0fdf4}.opt b{display:block;font-size:1.1rem}
+  .regalo{background:#dcfce7;border-radius:10px;padding:10px;margin-top:8px;font-weight:600;display:none}
+  .row2{display:grid;gap:10px;grid-template-columns:1fr 1fr}
+  .ok{background:#dcfce7;padding:16px;border-radius:12px;text-align:center;font-weight:600;margin-bottom:16px}
+  .mens{background:#f0fdf4;border-radius:10px;padding:10px 12px;margin:10px 0;font-size:.9rem}
+  .mens b{color:#14532d}details{margin-top:10px;font-size:.88rem}summary{cursor:pointer;font-weight:700;color:#15803d}
+  details li{margin:4px 0}.fechas{display:flex;flex-wrap:wrap;gap:4px;margin-top:6px}.fechas span{background:#fff;border:1px solid #bbf7d0;border-radius:6px;padding:2px 6px;font-size:.8rem}
+  .pasos{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;max-width:620px;margin:18px auto 0}
+  .paso{background:#ffffff1f;border-radius:12px;padding:10px 6px;font-size:.82rem;line-height:1.3}
+  .paso b{display:block;font-size:1.4rem}
+  .nota{background:#ecfdf5;border:1px dashed #16a34a;border-radius:12px;padding:10px 12px;font-size:.9rem;margin:12px 0}
+  .opc{font-weight:400;color:#64748b;font-size:.8rem}
+  #listo{display:none;background:#fff;border-radius:18px;padding:26px 20px;margin-top:22px;text-align:center;box-shadow:0 4px 18px #0001}
+  #listo .check{font-size:3rem;line-height:1}#listo h3{margin:8px 0 6px;font-size:1.35rem}
+  .err{color:#b91c1c;font-weight:600;font-size:.9rem;margin-top:8px}
+  .links{text-align:center;margin:26px 0 6px}.links a{color:#15803d;font-weight:600}
+  footer{text-align:center;color:#64748b;font-size:.78rem;padding:20px 16px 34px;line-height:1.6}
+</style>
+</head>
+<body>
+<header>
+  <img src="logo-blanco.png" alt="Bingos · Yamir Aracne" style="width:min(320px,80%);display:block;margin:0 auto 6px">
+  <h1 style="font-size:1.4rem">Bingos 2027</h1>
+  <p>Autos 0 km, lanchas, motos y órdenes de compra. Pagalo cuota a cuota, varias juntas o de contado.</p>
+  <div class="pasos">
+    <div class="paso"><b>1</b>Elegí tu bingo</div>
+    <div class="paso"><b>2</b>Dejá tu nombre y WhatsApp</div>
+    <div class="paso"><b>3</b>Te paso los cartones disponibles</div>
+  </div>
+</header>
+<main>
+  <div id="aviso"></div>
+  <div class="grid" id="bingos"><p class="mut">Cargando bingos…</p></div>
+
+  <form id="f" autocomplete="on" novalidate>
+    <h3 id="fTitulo" style="margin:0 0 4px"></h3>
+    <div class="mut" id="fPlan"></div>
+    <div class="nota">No necesitás saber el número de cartón: los números los entrega el club y <b>te paso por WhatsApp los que tengo disponibles</b>.</div>
+
+    <div class="mut" style="margin-top:4px">Estos datos van en tu cartón, por eso son todos obligatorios.</div>
+    <div class="row2">
+      <div><label for="nombre">Nombre</label><input id="nombre" autocomplete="given-name" placeholder="Ej: María"></div>
+      <div><label for="apellido">Apellido</label><input id="apellido" autocomplete="family-name" placeholder="Ej: González"></div>
+    </div>
+    <div class="row2">
+      <div><label for="dni">DNI</label><input id="dni" inputmode="numeric" placeholder="Ej: 30123456"></div>
+      <div><label for="telefono">Teléfono (WhatsApp)</label><input id="telefono" type="tel" autocomplete="tel" inputmode="tel" placeholder="Ej: 3482 123456"></div>
+    </div>
+    <label for="direccion">Dirección</label><input id="direccion" autocomplete="street-address" placeholder="Ej: Calle 44 N° 1234">
+    <div class="row2">
+      <div><label for="localidad">Localidad</label><input id="localidad" autocomplete="address-level2" placeholder="Ej: Reconquista"></div>
+      <div><label for="provincia">Provincia</label><select id="provincia" autocomplete="address-level1"><option>Santa Fe</option><option>Buenos Aires</option><option>CABA</option><option>Catamarca</option><option>Chaco</option><option>Chubut</option><option>Córdoba</option><option>Corrientes</option><option>Entre Ríos</option><option>Formosa</option><option>Jujuy</option><option>La Pampa</option><option>La Rioja</option><option>Mendoza</option><option>Misiones</option><option>Neuquén</option><option>Río Negro</option><option>Salta</option><option>San Juan</option><option>San Luis</option><option>Santa Cruz</option><option>Santiago del Estero</option><option>Tierra del Fuego</option><option>Tucumán</option></select></div>
+    </div>
+
+    <label>¿Cuántos cartones querés?</label>
+    <div class="opts" id="cants"></div>
+    <div class="regalo" id="regalo"></div>
+
+    <label>¿Cómo te gustaría pagar?</label>
+    <div class="opts" id="modos">
+      <div class="opt on" data-v="Cuota a cuota"><b>Mes a mes</b>cuota a cuota</div>
+      <div class="opt" data-v="Varias cuotas juntas"><b>Adelantar</b>varias cuotas</div>
+      <div class="opt" data-v="Contado"><b>Contado</b>pago único</div>
+    </div>
+
+    <div class="err" id="fErr"></div>
+    <button class="btn wa" id="enviar">Enviar mis datos</button>
+    <p class="mut" style="text-align:center">Al enviar confirmás que sos mayor de 18 años.</p>
+  </form>
+
+  <div id="listo">
+    <div class="check">✅</div>
+    <h3>¡Listo, tus datos ya quedaron cargados!</h3>
+    <p>Último paso: mandame el mensaje por WhatsApp y te paso los <b>números de cartón disponibles</b> y cómo pagar.</p>
+    <a class="btn wa" id="waBtn" target="_blank" rel="noopener">Abrir WhatsApp y enviar mensaje</a>
+    <p class="mut">El mensaje ya va escrito, solo tocá enviar.</p>
+    <button class="btn" style="background:#e2e8f0;color:#0f172a" onclick="otro()">Anotarme en otro bingo</button>
+  </div>
+
+  <div class="links"><a href="consulta.html">¿Ya tenés tu cartón? Consultá tus cuotas acá</a></div>
+</main>
+<footer>
+  <div style="font-weight:700;color:#334155;margin-bottom:6px">Vendedor: Yamir Aracne</div>
+  <div id="legal"></div>
+  Prohibida la venta a menores de 18 años · Jugar compulsivamente es perjudicial para la salud · Imágenes ilustrativas.
+</footer>
+
+<script src="config.js"></script>
+<script>
+const qs = new URLSearchParams(location.search);
+const origen = [qs.get('utm_source'), qs.get('utm_campaign'), qs.get('o')].filter(Boolean).join('/');
+if (origen) sessionStorage.setItem('origen', origen);
+let lista = [], sel = null, cantidad = 1, modalidad = 'Cuota a cuota';
+
+// Recordar datos para autocompletar la próxima vez
+const guardados = JSON.parse(localStorageSafe('get', 'bingo_datos') || '{}');
+['nombre','apellido','dni','telefono','direccion','localidad','provincia'].forEach(k => { if (guardados[k]) $(k).value = guardados[k]; });
+function localStorageSafe(op, k, v){ try { return op === 'get' ? localStorage.getItem(k) : localStorage.setItem(k, v); } catch(e){ return null; } }
+
+apiGet('publico').then(d => {
+  lista = d.bingos || [];
+  $('bingos').innerHTML = lista.map(b => {
+    const dias = b.promo_hasta ? Math.ceil((new Date(b.promo_hasta + 'T23:59:59') - new Date()) / 86400000) : null;
+    const promo = b.promo && (dias === null || dias >= 0)
+      ? `<div class="promo">${b.promo}${dias !== null ? `<span class="cd">${dias === 0 ? '¡ÚLTIMO DÍA!' : 'Quedan ' + dias + ' días'}</span>` : ''}</div>` : '';
+    return `<div class="card" data-id="${b.id}">
+      <div class="top" style="background:linear-gradient(135deg,${b.color},#0f172a)"><h2>${b.nombre}</h2><small>Sorteo ${b.fecha_sorteo} · ${b.lugar}</small></div>
+      <div class="body">
+        <div class="premios"><b>Premios:</b> ${b.premios}</div>
+        ${promo}
+        ${b.premios_mensuales ? `<div class="mens"><b>Sorteos mensuales</b> por ${b.sorteos_fuente}: ${b.premios_mensuales}.
+          ${b.proximo_sorteo ? `<br>Próximo: <b>${b.proximo_sorteo}</b>. Participás con la cuota del mes paga.` : ''}
+          <div class="fechas">${b.sorteos_mensuales.map(f => `<span>${f.slice(0,5)}</span>`).join('')}</div></div>` : ''}
+        ${b.especiales.length ? (() => { const px = b.especiales.find(e => new Date(e.corte_iso + 'T23:59:59') >= new Date());
+          const dc = px ? Math.ceil((new Date(px.corte_iso + 'T23:59:59') - new Date()) / 86400000) : null;
+          return `<div class="mens"><b>Sorteos especiales</b> por ${b.especiales_fuente}: ${b.premios_especiales}.
+          ${b.especiales.map(e => `<div style="margin-top:4px">• <b>${e.nombre}</b> (${e.sorteo}): con ${e.todo ? 'el bingo pagado completo' : e.min + (e.min > 1 ? ' cuotas pagas' : ' cuota paga')} al ${e.corte}</div>`).join('')}
+          ${px ? `<div class="cd" style="color:#dc2626;font-weight:800;margin-top:6px">${dc === 0 ? '¡Hoy es el último día para entrar al de ' + px.nombre + '!' : 'Quedan ' + dc + ' días para entrar al de ' + px.nombre}</div>` : ''}</div>`; })() : ''}
+        <div class="precio">${pesos(b.precio)}</div>
+        <div class="mut">${planTxt(b.cuotas)}</div>
+        ${b.premios_detalle.length ? `<details><summary>Ver los ${b.premios_detalle.length} premios del sorteo final</summary><ul>${b.premios_detalle.map(r => `<li>${r}</li>`).join('')}</ul></details>` : ''}
+        ${b.reglamento.length ? `<details><summary>Reglamento resumido</summary><ul>${b.reglamento.map(r => `<li>${r}</li>`).join('')}</ul>
+          ${b.contacto_club ? `<div class="mut">${b.contacto_club}</div>` : ''}</details>` : ''}
+        <button class="btn" onclick="elegir('${b.id}')">Quiero este bingo</button>
+      </div></div>`;
+  }).join('') || '<p>No hay bingos a la venta en este momento.</p>';
+  $('legal').innerHTML = lista.map(b => `${b.nombre}: ${b.organiza} · ${b.autorizacion}`).join('<br>');
+  const pre = (qs.get('bingo') || '').toUpperCase();
+  if (pre && lista.some(b => b.id === pre)) elegir(pre);
+}).catch(() => $('bingos').innerHTML = '<p>No se pudieron cargar los bingos. Recargá la página.</p>');
+
+function elegir(id) {
+  sel = lista.find(b => b.id === id);
+  document.querySelectorAll('.card').forEach(c => c.classList.toggle('sel', c.dataset.id === id));
+  $('fTitulo').textContent = sel.nombre;
+  $('fPlan').textContent = `${pesos(sel.precio)} · ${planTxt(sel.cuotas)}`;
+  const opciones = sel.promo_3x2 ? [1, 2, 4] : [1, 2, 3];
+  $('cants').innerHTML = opciones.map(n => `<div class="opt" data-n="${n}"><b>${n}</b>${n === 1 ? 'cartón' : 'cartones'}</div>`).join('');
+  $('cants').querySelectorAll('.opt').forEach(o => o.onclick = () => setCant(+o.dataset.n));
+  setCant(1);
+  $('listo').style.display = 'none';
+  $('f').style.display = 'block';
+  $('f').scrollIntoView({ behavior: 'smooth' });
+  setTimeout(() => { if (!$('nombre').value) $('nombre').focus({ preventScroll: true }); }, 600);
+}
+function regalos(n){ return sel.promo_3x2 ? Math.floor(n / 2) : 0; }
+function setCant(n) {
+  cantidad = n;
+  $('cants').querySelectorAll('.opt').forEach(o => o.classList.toggle('on', +o.dataset.n === n));
+  const r = regalos(n);
+  $('regalo').style.display = sel.promo_3x2 ? 'block' : 'none';
+  $('regalo').textContent = r
+    ? `¡Promo 3x2! Pagás ${n} y te llevás ${n + r} cartones (${r} de regalo).`
+    : 'Promo 3x2: llevando 2 cartones a tu nombre, el 3° es de REGALO.';
+}
+$('modos').querySelectorAll('.opt').forEach(o => o.onclick = () => {
+  modalidad = o.dataset.v;
+  $('modos').querySelectorAll('.opt').forEach(x => x.classList.toggle('on', x === o));
+});
+
+$('f').addEventListener('submit', async e => {
+  e.preventDefault();
+  const v = k => $(k).value.trim();
+  const reglas = [['nombre', 'tu nombre', x => x.length >= 2], ['apellido', 'tu apellido', x => x.length >= 2],
+    ['dni', 'tu DNI (solo números)', x => /^\d{7,8}$/.test(x.replace(/\D/g, ''))],
+    ['telefono', 'tu teléfono con característica (ej: 3482 123456)', x => x.replace(/\D/g, '').length >= 10],
+    ['direccion', 'tu dirección', x => x.length >= 4], ['localidad', 'tu localidad', x => x.length >= 3], ['provincia', 'tu provincia', x => !!x]];
+  const mal = reglas.find(([k, , ok]) => !ok(v(k)));
+  if (mal) return error('Completá ' + mal[1] + '.', mal[0]);
+  $('fErr').textContent = '';
+  const btn = $('enviar'); btn.disabled = true; btn.textContent = 'Enviando…';
+  const d = { action: 'interesado', bingo: sel.id, nombre: v('nombre'), apellido: v('apellido'), dni: v('dni').replace(/\D/g, ''),
+    telefono: v('telefono'), direccion: v('direccion'), localidad: v('localidad'), provincia: v('provincia'),
+    cantidad: cantidad + regalos(cantidad), modalidad, origen: sessionStorage.getItem('origen') || 'directo' };
+  localStorageSafe('set', 'bingo_datos', JSON.stringify({ nombre: d.nombre, apellido: d.apellido, dni: d.dni, telefono: d.telefono, direccion: d.direccion, localidad: d.localidad, provincia: d.provincia }));
+
+  // 1) Se cargan los datos en el sistema (si tarda más de 4 s seguimos igual)
+  const guardar = fetch(API, { method: 'POST', headers: { 'Content-Type': 'text/plain' }, body: JSON.stringify(d), keepalive: true }).catch(() => {});
+  await Promise.race([guardar, new Promise(r => setTimeout(r, 4000))]);
+
+  // 2) Mensaje de WhatsApp para el vendedor, preguntando por los cartones disponibles
+  const r = regalos(cantidad);
+  const msg = `Hola ${VENDEDOR_NOMBRE.split(" ")[0]}! Me anote en la web para el ${sel.nombre}. Que numeros de carton tenes disponibles?\n\n` +
+    `Nombre: ${d.nombre} ${d.apellido}\nDNI: ${d.dni}\nDireccion: ${d.direccion}\nLocalidad: ${d.localidad}, ${d.provincia}\nTelefono: ${d.telefono}\n` +
+    `Cartones: ${cantidad}${r ? ' (+' + r + ' de regalo 3x2)' : ''}\nForma de pago: ${modalidad}`;
+  const link = `https://wa.me/${VENDEDOR_WA}?text=${encodeURIComponent(msg)}`;
+
+  // 3) Pantalla de confirmación con botón grande (por si el celular no abre WhatsApp solo)
+  $('waBtn').href = link;
+  $('f').style.display = 'none'; $('listo').style.display = 'block';
+  $('listo').scrollIntoView({ behavior: 'smooth' });
+  btn.disabled = false; btn.textContent = 'Enviar mis datos';
+  setTimeout(() => { location.href = link; }, 700);
+});
+function error(t, campo){ $('fErr').textContent = t; $(campo).focus(); }
+function otro(){ $('listo').style.display = 'none'; scrollTo({ top: 0, behavior: 'smooth' }); }
+</script>
+</body>
+</html>
