@@ -76,6 +76,7 @@
       <button data-t="bonos">Cartones</button>
       <button data-t="interesados">Interesados</button>
       <button data-t="movs">Movimientos</button>
+      <button data-t="rend">Rendiciones</button>
     </div>
     <div id="buscar" style="display:none;margin-bottom:10px"><input id="q" placeholder="Buscar por nombre, DNI, teléfono o N° de cartón" oninput="render()"></div>
     <div id="lista"></div>
@@ -130,20 +131,21 @@ function kpis(){
   $('kpis').innerHTML = `
     <div class="kpi"><small>Cartones vendidos</small><b>${s.bonos}</b>${s.bonificados ? `<small>${s.bonificados} de regalo 3x2</small>` : ''}</div>
     <div class="kpi v"><small>Cobrado</small><b>${pesos(s.recaudado)}</b><small>Ef. ${pesos(s.efectivo)} · Transf. ${pesos(s.transferencia)}</small></div>
-    <div class="kpi r"><small>Deuda vencida</small><b>${pesos(s.deuda_vencida)}</b><small>${s.atrasados} bonos atrasados</small></div>
-    <div class="kpi"><small>Falta cobrar (total)</small><b>${pesos(s.por_cobrar)}</b><small>${s.cancelados} cancelados</small></div>`;
+    <div class="kpi r"><small>Deuda vencida</small><b>${pesos(s.deuda_vencida)}</b><small>${s.atrasados} cartones atrasados</small></div>
+    <div class="kpi"><small>Falta cobrar (total)</small><b>${pesos(s.por_cobrar)}</b><small>${s.cancelados} cancelados</small></div>
+    <div class="kpi" style="cursor:pointer" onclick="irRend()"><small>Rendido a la institución</small><b>${pesos(s.rendido)}</b><small>En tu poder: <b style="font-size:.85rem;color:${s.en_poder > 0 ? '#b45309' : '#15803d'}">${pesos(s.en_poder)}</b></small></div>`;
   const so = s.sorteo;
   $('sorteo').innerHTML = so ? `<div class="sorteo"><b>Sorteo mensual ${so.numero}/${so.total} · ${so.fecha}</b>
     <small>${so.dias === 0 ? 'HOY' : 'en ' + so.dias + ' días'} · ${esc(so.fuente)}</small><br>
     <small>${esc(so.premios)}</small><br>
-    Participan <b>${so.participan}</b> bonos · <b>${so.no_participan}</b> todavía no pagaron la cuota de este sorteo</div>` : '';
+    Participan <b>${so.participan}</b> cartones · <b>${so.no_participan}</b> todavía no pagaron la cuota de este sorteo</div>` : '';
   const es = s.especial;
   if (es) $('sorteo').innerHTML += `<div class="sorteo" style="background:linear-gradient(135deg,#991b1b,#dc2626)"><b>Sorteo Especial de ${esc(es.nombre)} · ${es.sorteo}</b>
     <small>· ${esc(es.fuente)}</small><br><small>${esc(es.premios)}</small><br>
     Corte: <b>${es.corte}</b> (${es.dias_corte > 0 ? 'en ' + es.dias_corte + ' días' : es.dias_corte === 0 ? 'HOY' : 'cerrado'}) con ${es.min} cuota(s) paga(s) ·
     Entran <b>${es.clasifican}</b> · <b>${es.no_clasifican}</b> todavía no</div>`;
-  if (s.riesgo_baja) $('sorteo').innerHTML += `<div class="item" style="border-left:5px solid #b91c1c"><b style="color:#b91c1c">${s.riesgo_baja} bono(s) en riesgo por atraso</b><div class="mut">${esc(s.aviso_mora)}</div></div>`;
-  if (s.falta_definitiva) $('sorteo').innerHTML += `<div class="item" style="border-left:5px solid #f59e0b"><b>${s.falta_definitiva} bono(s) cancelados sin boleta definitiva</b><div class="mut">Hay que canjearla con firma y DNI antes del sorteo. Están en Pendientes.</div></div>`;
+  if (s.riesgo_baja) $('sorteo').innerHTML += `<div class="item" style="border-left:5px solid #b91c1c"><b style="color:#b91c1c">${s.riesgo_baja} cartón(es) en riesgo por atraso</b><div class="mut">${esc(s.aviso_mora)}</div></div>`;
+  if (s.falta_definitiva) $('sorteo').innerHTML += `<div class="item" style="border-left:5px solid #f59e0b"><b>${s.falta_definitiva} cartón(es) cancelados sin boleta definitiva</b><div class="mut">Hay que canjearla con firma y DNI antes del sorteo. Están en Pendientes.</div></div>`;
   const n = D.interesados.filter(i => i.estado === 'NUEVO').length;
   const rec = D.compradores.filter(c => c.recordar).length;
   $('tabs').querySelector('[data-t=interesados]').innerHTML = 'Interesados' + (n ? `<span class="badge">${n}</span>` : '');
@@ -201,9 +203,21 @@ function render(){
         <button class="b r" onclick="marcarInt('${i.id}','DESCARTADO')">Descartar</button>
       </div></div>`).join('') || '<div class="vacio">Sin interesados nuevos</div>';
   }
+  if (TAB === 'rend') {
+    const s = D.resumen;
+    h = `<div class="item" style="border-left:5px solid #b45309">
+        <div class="l1"><div><h4>Para rendir: ${pesos(s.sin_rendir)}</h4>
+        <div class="mut">${s.sin_rendir_cant} pago(s) cobrados que todavía no rendiste · Cobrado total ${pesos(s.recaudado)} · Rendido ${pesos(s.rendido)}</div></div></div>
+        <div class="acc"><button class="b p" onclick="abrirRend()">+ Registrar rendición</button>
+        <button class="b wa" onclick="detalleRend()">Enviar detalle por WhatsApp</button></div></div>` +
+      (D.rendiciones.map(r => `<div class="item"><div class="l1"><div>
+        <h4>${pesos(r.monto)} · ${esc(r.fecha)}</h4>
+        <div class="mut">${esc(r.medio)}${r.recibio ? ' · recibió ' + esc(r.recibio) : ''}${r.comprobante ? ' · ' + esc(r.comprobante) : ''} · ${esc(r.cantidad_pagos)} pago(s)${r.observacion ? '<br>' + esc(r.observacion) : ''}</div></div>
+        <button class="b r" onclick="borrarRend('${r.id}')">Borrar</button></div></div>`).join('') || '<div class="vacio">Todavía no registraste rendiciones</div>');
+  }
   if (TAB === 'movs') {
     h = D.movimientos.filter(match).map(m => `<div class="item"><div class="l1"><div>
-      <h4>${pesos(m.monto)} · ${esc(m.nombre)}</h4><div class="mut">${esc(m.fecha)} · Bono ${esc(m.numero_bono)} · ${esc(m.detalle)} · ${esc(m.medio)} ${m.observacion ? '· ' + esc(m.observacion) : ''}</div></div>
+      <h4>${pesos(m.monto)} · ${esc(m.nombre)}</h4><div class="mut">${m.rendicion_id ? '<b style="color:#15803d">RENDIDO</b> · ' : '<b style="color:#b45309">sin rendir</b> · '}${esc(m.fecha)} · Cartón ${esc(m.numero_bono)} · ${esc(m.detalle)} · ${esc(m.medio)} ${m.observacion ? '· ' + esc(m.observacion) : ''}</div></div>
       <button class="b r" onclick="borrarMov('${m.id}')">Borrar</button></div></div>`).join('') || '<div class="vacio">Sin movimientos</div>';
   }
   $('lista').innerHTML = h;
@@ -357,6 +371,53 @@ async function marcarDefinitiva(id){
   if (!confirm('¿Confirmás que entregaste la boleta definitiva firmada?')) return;
   if (aplicar(await api({ action: 'definitiva', clave: CLAVE, bingo: BID, id }))) toast('Boleta definitiva registrada');
 }
+// ---------- RENDICIONES ----------
+function irRend(){ document.querySelector('[data-t=rend]').click(); }
+function abrirRend(){
+  const l = D.sin_rendir;
+  abrir(`<h3>Registrar rendición</h3><div class="mut">${esc(bingo().nombre)} · marcá los pagos que entregás a la institución</div>
+    <div style="max-height:260px;overflow:auto;margin:10px 0;border:1px solid #e2e8f0;border-radius:10px;padding:6px">
+    ${l.length ? `<label style="font-weight:700;display:flex;gap:8px;align-items:center;margin:4px"><input type="checkbox" id="rTodos" checked style="width:auto" onchange="document.querySelectorAll('.rm').forEach(x=>x.checked=this.checked);sumaRend()"> Todos</label>` +
+      l.map(m => `<label style="font-weight:400;display:flex;gap:8px;align-items:flex-start;margin:6px 4px"><input type="checkbox" class="rm" value="${m.id}" data-m="${m.monto}" checked style="width:auto;margin-top:3px" onchange="sumaRend()">
+      <span>${pesos(m.monto)} · Cartón ${esc(m.numero_bono || 's/n')} · ${esc(m.nombre)}<br><span class="mut">${esc(m.fecha)} · ${esc(m.detalle)} · ${esc(m.medio)}</span></span></label>`).join('')
+      : '<div class="mut" style="padding:8px">No hay pagos sin rendir. Podés registrar igual un monto.</div>'}</div>
+    <div class="row2"><div><label>Monto entregado</label><input id="rMonto" type="number" inputmode="numeric"></div>
+      <div><label>Fecha</label><input id="rFecha" type="date" value="${new Date().toLocaleDateString('sv')}"></div></div>
+    <div class="prev" id="rPrev"></div>
+    <div class="row2"><div><label>Medio</label><select id="rMedio"><option>Efectivo</option><option>Transferencia</option></select></div>
+      <div><label>¿Quién recibió?</label><input id="rRecibio" placeholder="Ej: Tesorería del club"></div></div>
+    <label>N° de recibo / comprobante</label><input id="rComp" placeholder="opcional">
+    <label>Observación</label><input id="rObs" placeholder="opcional (ej: descontada mi comisión)">
+    <button class="b p" style="width:100%;margin-top:14px;padding:14px" id="rBtn" onclick="guardarRend()">Guardar rendición</button>`);
+  sumaRend();
+}
+function sumaRend(){
+  const t = [...document.querySelectorAll('.rm:checked')].reduce((s, x) => s + Number(x.dataset.m), 0);
+  $('rMonto').value = t;
+  $('rPrev').innerHTML = `Pagos marcados: <b>${pesos(t)}</b>. Si entregás otro monto (por ejemplo, descontando tu comisión), cambialo arriba.`;
+}
+async function guardarRend(){
+  const mov_ids = [...document.querySelectorAll('.rm:checked')].map(x => x.value);
+  if (!(+$('rMonto').value > 0)) return toast('Indicá el monto entregado');
+  $('rBtn').disabled = true; $('rBtn').textContent = 'Guardando…';
+  const r = await api({ action: 'rendicion', clave: CLAVE, bingo: BID, mov_ids, monto: $('rMonto').value, fecha: $('rFecha').value,
+    medio: $('rMedio').value, recibio: $('rRecibio').value, comprobante: $('rComp').value, observacion: $('rObs').value });
+  if (aplicar(r)) { cerrar(); toast('Rendición guardada'); } else { $('rBtn').disabled = false; $('rBtn').textContent = 'Guardar rendición'; }
+}
+async function borrarRend(id){
+  if (!confirm('¿Borrar esta rendición? Los pagos vuelven a quedar como "sin rendir".')) return;
+  if (aplicar(await api({ action: 'borrarRendicion', clave: CLAVE, bingo: BID, id }))) toast('Rendición borrada');
+}
+/** Arma el detalle de lo cobrado sin rendir para mandárselo a la institución */
+function detalleRend(){
+  const l = D.sin_rendir, b = bingo();
+  if (!l.length) return toast('No hay pagos sin rendir');
+  const txt = `Rendicion ${b.nombre.split(' – ')[0]}\nVendedor: Yamir Aracne\nFecha: ${new Date().toLocaleDateString('es-AR')}\n\n` +
+    l.map(m => `Carton ${m.numero_bono || 's/n'} - ${m.nombre} - ${m.detalle} - ${pesos(m.monto)} (${m.medio})`).join('\n') +
+    `\n\nTotal: ${pesos(l.reduce((s, m) => s + Number(m.monto), 0))} (${l.length} pagos)`;
+  window.open('https://wa.me/?text=' + encodeURIComponent(txt), '_blank');
+}
+
 async function borrarMov(id){
   if (!confirm('¿Borrar este pago?')) return;
   if (aplicar(await api({ action: 'borrarMov', clave: CLAVE, bingo: BID, id }))) toast('Pago borrado');
