@@ -36,6 +36,7 @@
   <p style="text-align:center"><a href="index.html" style="color:#15803d;font-weight:600">Ver bingos disponibles</a></p>
 </main>
 <script src="config.js"></script>
+<script src="logos.js"></script>
 <script>
 const g = JSON.parse((() => { try { return localStorage.getItem('bingo_datos'); } catch(e){ return null; } })() || '{}');
 if (g.dni) $('dni').value = g.dni;
@@ -50,6 +51,7 @@ $('go').onclick = async () => {
     const r = await api({ action: 'consulta', bingo: $('bingo').value, dni: $('dni').value, tel4: $('tel4').value });
     if (!r.ok) { $('err').textContent = r.error; return; }
     $('res').innerHTML = r.bonos.map(b => `<div class="box">
+      <div style="display:flex;gap:10px;align-items:center;margin-bottom:6px">${logosHTML($('bingo').value, 52)}</div>
       <h3 style="margin:0">${r.bingo.nombre}</h3>
       <p>Bono N° <b>${b.numero_bono}</b> · ${b.nombre}<br><span class="tag ${b.estado}">${b.etiqueta}</span></p>
       <p>Cuotas pagas: <b>${b.pagadas}/${b.total}</b> · Pagado ${pesos(b.pagado)}${b.saldo ? ' · Resta ' + pesos(b.saldo) : ''}</p>

@@ -89,6 +89,7 @@
 <div class="toast" id="toast"></div>
 
 <script src="config.js"></script>
+<script src="logos.js"></script>
 <script>
 let CLAVE = ls('get', 'bingo_clave') || '', BINGOS = [], BID = ls('get', 'bingo_sel') || '', D = null, TAB = 'agenda', AG = null, IR = null;
 function ls(op, k, v){ try { return op === 'get' ? localStorage.getItem(k) : localStorage.setItem(k, v); } catch(e){ return null; } }
@@ -108,7 +109,7 @@ async function login(){
     ls('set', 'bingo_clave', CLAVE);
     BINGOS = r.bingos; if (!BINGOS.some(b => b.id === BID)) BID = BINGOS[0].id;
     $('login').style.display = 'none'; $('app').style.display = 'block';
-    $('tabsB').innerHTML = BINGOS.map(b => `<button data-id="${b.id}">${esc(b.nombre.split('–')[0].trim())}</button>`).join('');
+    $('tabsB').innerHTML = BINGOS.map(b => `<button data-id="${b.id}" style="display:flex;align-items:center;justify-content:center;gap:8px">${LOGOS[b.id] ? `<img src="${LOGOS[b.id][0]}" alt="" style="height:24px;background:#fff;border-radius:6px;padding:2px 4px">` : ''}${esc(b.nombre.split('–')[0].trim())}</button>`).join('');
     $('tabsB').querySelectorAll('button').forEach(x => x.onclick = () => { BID = x.dataset.id; ls('set','bingo_sel',BID); cargar(); });
     cargar();
     // Precarga los otros bingos y la agenda en paralelo, así después cambiar de bingo es instantáneo

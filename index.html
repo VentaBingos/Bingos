@@ -18,6 +18,7 @@
   .grid{display:grid;gap:18px;grid-template-columns:repeat(auto-fit,minmax(300px,1fr))}
   .card{background:#fff;border-radius:18px;overflow:hidden;box-shadow:0 4px 18px #0001;border:3px solid transparent;transition:.2s}
   .card.sel{border-color:#16a34a;transform:translateY(-2px)}
+  .logos{background:#fff;display:flex;align-items:center;justify-content:center;gap:14px;padding:14px 12px 10px}
   .top{padding:18px;color:#fff}.top h2{margin:0;font-size:1.35rem}.top small{opacity:.9}
   .body{padding:16px}.premios{line-height:1.45}
   .promo{background:#fef3c7;border-left:5px solid #f59e0b;padding:10px 12px;border-radius:8px;margin:12px 0;font-size:.92rem;font-weight:600}
@@ -118,6 +119,7 @@
 </footer>
 
 <script src="config.js"></script>
+<script src="logos.js"></script>
 <script>
 const qs = new URLSearchParams(location.search);
 const origen = [qs.get('utm_source'), qs.get('utm_campaign'), qs.get('o')].filter(Boolean).join('/');
@@ -136,6 +138,7 @@ apiGet('publico').then(d => {
     const promo = b.promo && (dias === null || dias >= 0)
       ? `<div class="promo">${b.promo}${dias !== null ? `<span class="cd">${dias === 0 ? '¡ÚLTIMO DÍA!' : 'Quedan ' + dias + ' días'}</span>` : ''}</div>` : '';
     return `<div class="card" data-id="${b.id}">
+      ${LOGOS[b.id] ? `<div class="logos">${logosHTML(b.id, 78)}</div>` : ''}
       <div class="top" style="background:linear-gradient(135deg,${b.color},#0f172a)"><h2>${b.nombre}</h2><small>Sorteo ${b.fecha_sorteo} · ${b.lugar}</small></div>
       <div class="body">
         <div class="premios"><b>Premios:</b> ${b.premios}</div>
@@ -164,7 +167,7 @@ apiGet('publico').then(d => {
 function elegir(id) {
   sel = lista.find(b => b.id === id);
   document.querySelectorAll('.card').forEach(c => c.classList.toggle('sel', c.dataset.id === id));
-  $('fTitulo').textContent = sel.nombre;
+  $('fTitulo').innerHTML = `${LOGOS[sel.id] ? `<div style="display:flex;gap:10px;align-items:center;margin-bottom:6px">${logosHTML(sel.id, 46)}</div>` : ''}${sel.nombre}`;
   $('fPlan').textContent = `${pesos(sel.precio)} · ${planTxt(sel.cuotas)}`;
   const opciones = sel.promo_3x2 ? [1, 2, 4] : [1, 2, 3];
   $('cants').innerHTML = opciones.map(n => `<div class="opt" data-n="${n}"><b>${n}</b>${n === 1 ? 'cartón' : 'cartones'}</div>`).join('');
