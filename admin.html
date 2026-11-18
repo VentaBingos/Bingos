@@ -158,9 +158,10 @@ $('tabs').querySelectorAll('button').forEach(b => b.onclick = () => {
 function chips(c){ return `<div class="chips">${c.grilla.map(g => `<div class="chip ${g.estado}" title="Cuota ${g.n} · vence ${g.vence} · ${pesos(g.monto)}">${g.n}</div>`).join('')}</div>`; }
 function tarjeta(c){
   return `<div class="item">
-    <div class="l1"><div><h4>Cartón ${esc(c.numero_bono)} · ${esc(c.nombre)}</h4>
+    <div class="l1"><div><h4>Cartón ${c.numero_bono ? esc(c.numero_bono) : '<span style="color:#b45309">A ASIGNAR</span>'} · ${esc(c.nombre)}</h4>
       <div class="mut">${esc(c.telefono)}${c.localidad ? ' · ' + esc(c.localidad) : ''} · ${c.pagadas}/${c.total} cuotas · pagó ${pesos(c.pagado)}</div></div>
       <span class="tag ${c.mora ? 'RIESGO' : c.falta_definitiva ? 'A_VENCER' : c.estado}">${c.etiqueta}</span></div>
+    ${c.falta_numero ? `<div class="mut" style="color:#b45309;font-weight:700">Falta cargar el N° de cartón${c.bonificado === 'SI' ? ' de regalo' : ''} cuando el club lo asigne</div>` : ''}
     ${chips(c)}
     ${c.especial && !c.especial.cerrado && c.estado !== 'CANCELADO' ? `<div class="mut">Especial ${esc(c.especial.nombre)} (corte ${c.especial.corte}): ${c.especial.clasifica ? '<span class="si">entra</span>' : `<span class="no">le falta${c.especial.faltan > 1 ? 'n' : ''} ${c.especial.faltan} cuota${c.especial.faltan > 1 ? 's' : ''}</span>`}</div>` : ''}
     ${c.sorteo && c.estado !== 'CANCELADO' ? `<div class="mut">Sorteo mensual ${c.sorteo.fecha}: ${c.sorteo.participa ? '<span class="si">participa</span>' : '<span class="no">NO participa (falta pagar)</span>'}</div>` : ''}
@@ -169,6 +170,7 @@ function tarjeta(c){
     <div class="acc">
       ${c.estado !== 'CANCELADO' ? `<button class="b p" onclick="abrirPago('${c.id}')">Registrar pago</button>` : ''}
       ${c.falta_definitiva ? `<button class="b p" onclick="marcarDefinitiva('${c.id}')">Entregué boleta definitiva</button>` : ''}
+      ${c.falta_numero ? `<button class="b p" style="background:#b45309" onclick="abrirEditar('${c.id}')">Cargar N° de cartón</button>` : ''}
       <a class="b wa" href="${c.wa}" target="_blank">WhatsApp</a>
       <button class="b s" onclick="detalle('${c.id}')">Ver</button>
     </div></div>`;
@@ -180,7 +182,7 @@ function render(){
   let h = '';
   if (TAB === 'cobrar') {
     const l = D.compradores.filter(c => c.recordar).sort((a, b) => b.deuda - a.deuda || (a.dias ?? 99) - (b.dias ?? 99));
-    h = l.length ? `<p class="mut">Cuotas vencidas o que vencen en 5 días, bonos a los que les falta cuota para un sorteo especial que cierra en 7 días y cancelados sin boleta definitiva. Los que adelantaron cuotas no aparecen hasta su próximo vencimiento.</p>` + l.map(tarjeta).join('')
+    h = l.length ? `<p class="mut">Cuotas vencidas o que vencen en 5 días, cartones sin número asignado, a los que les falta cuota para un sorteo especial que cierra en 7 días y cancelados sin boleta definitiva. Los que adelantaron cuotas no aparecen hasta su próximo vencimiento.</p>` + l.map(tarjeta).join('')
                  : '<div class="vacio">Nadie para cobrar por ahora 🎉</div>';
   }
   if (TAB === 'bonos') {
@@ -212,10 +214,10 @@ function detalle(id){
   const c = D.compradores.find(x => x.id === id);
   const otros = D.compradores.filter(x => x.id !== id && x.dni && x.dni === c.dni);
   const movs = D.movimientos.filter(m => m.comprador_id === id);
-  abrir(`<h3>Cartón N° ${esc(c.numero_bono)}</h3><span class="tag ${c.estado}">${c.etiqueta}</span>
+  abrir(`<h3>Cartón N° ${c.numero_bono ? esc(c.numero_bono) : 'A ASIGNAR'}</h3><span class="tag ${c.estado}">${c.etiqueta}</span>
     <p>${esc(c.nombre)} · DNI ${esc(c.dni)}<br>${esc(c.telefono)}<br>${esc(c.direccion)} · ${esc(c.localidad)}, ${esc(c.provincia)}<br>
     <span class="mut">Alta ${esc(c.fecha_alta)} · ${esc(c.modalidad)} ${c.origen ? '· origen ' + esc(c.origen) : ''} ${c.notas ? '<br>Notas: ' + esc(c.notas) : ''}</span></p>
-    ${otros.length ? `<p class="mut">Otros cartones de esta persona: ${otros.map(o => 'N° ' + esc(o.numero_bono) + (o.bonificado === 'SI' ? ' (regalo)' : '')).join(', ')}</p>` : ''}
+    ${otros.length ? `<p class="mut">Otros cartones de esta persona: ${otros.map(o => 'N° ' + esc(o.numero_bono || 'a asignar') + (o.bonificado === 'SI' ? ' (regalo)' : '')).join(', ')}</p>` : ''}
     <table style="width:100%;font-size:.88rem;border-collapse:collapse">${c.grilla.map(g => `<tr style="border-bottom:1px solid #eee">
       <td><span class="chip ${g.estado}" style="display:inline-flex">${g.n}</span></td><td>${g.vence}</td><td>${pesos(g.monto)}</td>
       <td>${g.estado === 'P' ? 'Pagada' : g.estado === 'V' ? '<b style="color:#b91c1c">Vencida</b>' : 'Pendiente'}</td></tr>`).join('')}</table>
@@ -274,7 +276,7 @@ async function guardarPago(id){
 function confirmarWA(ids, tipo){
   const bs = D.compradores.filter(x => ids.includes(x.id));
   const c = bs[0], b = bingo();
-  const linea = bs.map(x => `Carton N° ${x.numero_bono}: ${x.bonificado === 'SI' ? 'REGALO 3x2' : x.pagadas + '/' + x.total + ' cuotas' + (x.estado === 'CANCELADO' ? ' - CANCELADO' : ' - proximo vencimiento ' + x.prox_venc)}`).join('\n');
+  const linea = bs.map(x => `Carton N° ${x.numero_bono || '(a confirmar)'}: ${x.bonificado === 'SI' ? 'REGALO 3x2' : x.pagadas + '/' + x.total + ' cuotas' + (x.estado === 'CANCELADO' ? ' - CANCELADO' : ' - proximo vencimiento ' + x.prox_venc)}`).join('\n');
   const txt = `Hola ${c.nombre.split(' ')[0]}! ${tipo === 'alta' ? 'Ya quedaste anotado en el ' : 'Recibi tu pago del '}${b.nombre.split(' – ')[0]}.\n${linea}\nAlias para pagar: ${b.alias}. Gracias!`;
   const link = c.wa.split('?')[0] + '?text=' + encodeURIComponent(txt);
   abrir(`<h3>✅ Guardado</h3><p>${esc(c.nombre)}</p><pre style="white-space:pre-wrap;background:#f1f5f9;padding:10px;border-radius:10px;font-size:.85rem">${esc(txt)}</pre>
@@ -315,7 +317,7 @@ function camposBonos(){
   let h = '', k = 0, pn = 0;
   for (let j = 1; j <= n + reg; j++) {
     const esRegalo = reg && j % 3 === 0;
-    h += `<label>${esRegalo ? '🎁 N° de cartón de REGALO (3x2)' : 'N° de cartón ' + (++pn)}</label>
+    h += `<label>${esRegalo ? '🎁 N° de cartón de REGALO (3x2)' : 'N° de cartón ' + (++pn)} <span class="mut" style="font-weight:400">(opcional, lo podés cargar después)</span></label>
       <input class="nb ${esRegalo ? 'regalo' : ''}" inputmode="numeric" value="${esc(prev[k++] || '')}">`;
   }
   $('aBonos').innerHTML = h + (reg ? `<div class="prev">Promo 3x2: paga ${n} y lleva ${n + reg}. El cartón de regalo queda cancelado sin cuotas.</div>` : '');
@@ -325,7 +327,7 @@ async function guardarAlta(intId){
   const req = [['aNom','Nombre'],['aApe','Apellido'],['aDni','DNI'],['aTel','Teléfono'],['aDir','Dirección'],['aLoc','Localidad'],['aProv','Provincia']];
   const falta = req.find(([id]) => !$(id).value.trim());
   if (falta) { $(falta[0]).focus(); return toast('Falta: ' + falta[1]); }
-  if (bonos.some(x => !x)) return toast('Completá todos los números de cartón');
+  if (bonos.some(x => !x) && !confirm('Hay cartones sin número. Quedan como "A ASIGNAR" y los completás después desde Editar. ¿Seguimos?')) return;
   $('aBtn').disabled = true; $('aBtn').textContent = 'Guardando…';
   const it = intId ? D.interesados.find(x => x.id === intId) : null;
   const r = await api({ action: 'alta', clave: CLAVE, bingo: BID, interesado_id: intId, nombre: $('aNom').value.trim(), apellido: $('aApe').value.trim(), dni: $('aDni').value.trim(),
@@ -333,7 +335,7 @@ async function guardarAlta(intId){
     notas: $('aNotas').value, origen: it ? it.origen : 'manual', bonos,
     pago: $('aPago').value ? { cuotas: $('aPago').value, medio: $('aMedio').value, fecha: $('aFecha').value } : null });
   if (!aplicar(r)) { $('aBtn').disabled = false; $('aBtn').textContent = 'Dar de alta'; return; }
-  const ids = D.compradores.filter(c => bonos.includes(String(c.numero_bono))).map(c => c.id);
+  const ids = r.nuevos_ids || [];
   confirmarWA(ids, 'alta');
 }
 
