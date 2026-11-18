@@ -72,7 +72,8 @@
     <div id="sorteo"></div>
     <div class="kpis" id="kpis"></div>
     <div class="tabs" id="tabs">
-      <button data-t="cobrar" class="on">Pendientes</button>
+      <button data-t="agenda" class="on">🔔 Agenda</button>
+      <button data-t="cobrar">Pendientes</button>
       <button data-t="bonos">Cartones</button>
       <button data-t="interesados">Interesados</button>
       <button data-t="movs">Movimientos</button>
@@ -89,7 +90,7 @@
 
 <script src="config.js"></script>
 <script>
-let CLAVE = ls('get', 'bingo_clave') || '', BINGOS = [], BID = ls('get', 'bingo_sel') || '', D = null, TAB = 'cobrar';
+let CLAVE = ls('get', 'bingo_clave') || '', BINGOS = [], BID = ls('get', 'bingo_sel') || '', D = null, TAB = 'agenda', AG = null, IR = null;
 function ls(op, k, v){ try { return op === 'get' ? localStorage.getItem(k) : localStorage.setItem(k, v); } catch(e){ return null; } }
 const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 function toast(t){ const e = $('toast'); e.textContent = t; e.style.display = 'block'; setTimeout(() => e.style.display = 'none', 2600); }
@@ -119,7 +120,18 @@ async function cargar(){
   document.querySelector('header').style.background = bingo().color || '#14532d';
   $('lista').innerHTML = '<div class="vacio">Cargando…</div>';
   aplicar(await api({ action: 'datos', clave: CLAVE, bingo: BID }));
+  if (IR) { const id = IR; IR = null; detalle(id); }
+  cargarAgenda();
 }
+async function cargarAgenda(){
+  try { const r = await api({ action: 'agenda', clave: CLAVE, dias: 30 }); if (r.ok) { AG = r; badgeAgenda(); if (TAB === 'agenda') render(); } } catch(e) {}
+}
+function badgeAgenda(){
+  if (!AG) return;
+  const n = AG.cuenta.atrasados + AG.items.filter(i => i.tipo === 'cuota' && i.dias <= 5).length;
+  $('tabs').querySelector('[data-t=agenda]').innerHTML = '🔔 Agenda' + (n ? `<span class="badge">${n}</span>` : '');
+}
+function irA(bingoId, id){ if (bingoId === BID) return detalle(id); BID = bingoId; ls('set','bingo_sel',BID); IR = id; cargar(); }
 function aplicar(r){
   if (!r.ok) { toast(r.error || 'Error'); return false; }
   D = r; kpis(); render(); return true;
@@ -202,6 +214,24 @@ function render(){
         <button class="b p" onclick="abrirAlta('${i.id}')">Dar de alta</button>
         <button class="b r" onclick="marcarInt('${i.id}','DESCARTADO')">Descartar</button>
       </div></div>`).join('') || '<div class="vacio">Sin interesados nuevos</div>';
+  }
+  if (TAB === 'agenda') {
+    if (!AG) { $('lista').innerHTML = '<div class="vacio">Cargando agenda…</div>'; return; }
+    const it = (i) => `<div class="item" style="border-left:5px solid ${i.color || '#16a34a'}">
+      <div class="l1"><div><h4>${i.carton ? 'Cartón ' + esc(i.carton) + ' · ' : ''}${esc(i.nombre)}</h4>
+      <div class="mut">${esc(i.bingo_nombre)} · ${esc(i.texto)}${i.fecha ? ' · ' + esc(i.fecha) : ''}</div></div>
+      ${i.tipo === 'cuota' ? `<span class="tag ${i.dias <= 5 ? 'A_VENCER' : 'AL_DIA'}">${i.dias === 0 ? 'HOY' : 'en ' + i.dias + ' días'}</span>` : i.tipo === 'atrasado' ? `<span class="tag RIESGO">${esc(i.etiqueta)}</span>` : ''}</div>
+      <div class="acc">${i.wa ? `<a class="b wa" href="${i.wa}" target="_blank">WhatsApp</a>` : ''}
+      ${i.id ? `<button class="b s" onclick="irA('${i.bingo}','${i.id}')">Ver cartón</button>` : `<button class="b s" onclick="BID='${i.bingo}';TAB='rend';cargar().then(()=>document.querySelector('[data-t=rend]').click())">Ir a rendiciones</button>`}</div></div>`;
+    const g = (t, arr, nota) => arr.length ? `<h3 style="margin:16px 0 8px">${t} <span class="mut">(${arr.length})</span></h3>${nota ? `<div class="mut" style="margin:-4px 0 8px">${nota}</div>` : ''}${arr.map(it).join('')}` : '';
+    const A = AG.items;
+    h = `<p class="mut">Los dos bingos juntos. También te llega un mail a las 8 hs cuando hay cobros o fechas cerca.</p>` +
+      g('🔴 Atrasados', A.filter(i => i.tipo === 'atrasado'), 'Mandales el recordatorio hoy.') +
+      g('🟡 Vencen en los próximos 5 días', A.filter(i => i.tipo === 'cuota' && i.dias <= 5)) +
+      g('📝 Tareas', A.filter(i => i.tipo === 'tarea')) +
+      g('🗓️ Próximos 30 días', A.filter(i => i.tipo === 'cuota' && i.dias > 5), 'Todavía no hace falta escribirles.') +
+      (AG.fechas.length ? `<h3 style="margin:16px 0 8px">📅 Fechas importantes</h3>` + AG.fechas.map(f => `<div class="item" style="border-left:5px solid ${f.color}"><b>${esc(f.fecha)}</b> · ${esc(f.bingo_nombre)}<div class="mut">${esc(f.texto)} · ${f.dias === 0 ? 'HOY' : 'en ' + f.dias + ' días'}</div></div>`).join('') : '');
+    if (!A.length && !AG.fechas.length) h += '<div class="vacio">Nada pendiente por ahora 🎉</div>';
   }
   if (TAB === 'rend') {
     const s = D.resumen;
