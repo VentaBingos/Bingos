@@ -257,7 +257,8 @@ function render(){
       <textarea id="dTxt" rows="3" style="margin-top:8px" placeholder="Ej: 0510, 0511, 0520-0540"></textarea>
       <div class="acc"><button class="b p" id="dBtn" onclick="cargarDisp()">Agregar números</button>
       ${d.libres.length ? `<button class="b s" onclick="copiarLibres()">Copiar lista de libres</button>` : ''}</div></div>
-      ${d.libres.length ? `<div class="item"><h4>Libres</h4><div class="chips" style="gap:6px">${d.libres.map(n => `<span class="tag AL_DIA" style="font-size:.85rem">${esc(n)} <a href="#" onclick="borrarDisp('${esc(n)}');return false" style="color:#b91c1c;text-decoration:none;margin-left:4px">×</a></span>`).join('')}</div></div>` : '<div class="vacio">Todavía no cargaste cartones disponibles</div>'}`;
+      ${d.libres.length ? `<div class="item"><h4>Libres</h4><div class="chips" style="gap:6px">${d.libres.map(n => `<span class="tag CANCELADO" style="font-size:.85rem">${esc(n)} <a href="#" onclick="borrarDisp('${esc(n)}');return false" style="color:#b91c1c;text-decoration:none;margin-left:4px">×</a></span>`).join('')}</div></div>` : '<div class="vacio">Todavía no cargaste cartones disponibles</div>'}
+      ${(d.vendidos || []).length ? `<div class="item"><h4>Vendidos <span class="mut">(${d.vendidos.length})</span></h4>${d.vendidos.map(v => `<div style="display:flex;gap:10px;align-items:center;padding:6px 8px;margin:4px 0;background:#fee2e2;border-radius:8px"><b style="color:#b91c1c;min-width:56px">${esc(v.numero)}</b><span>${esc(v.nombre)}</span></div>`).join('')}</div>` : ''}`;
   }
   if (TAB === 'rend') {
     const s = D.resumen;
