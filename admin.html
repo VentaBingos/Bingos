@@ -286,7 +286,7 @@ function detalle(id){
   const movs = D.movimientos.filter(m => m.comprador_id === id);
   abrir(`<h3>Cartón N° ${c.numero_bono ? esc(c.numero_bono) : 'A ASIGNAR'}</h3><span class="tag ${c.estado}">${c.etiqueta}</span>
     <p>${esc(c.nombre)} · DNI ${esc(c.dni)}<br>${esc(c.telefono)}<br>${esc(c.direccion)} · ${esc(c.localidad)}, ${esc(c.provincia)}<br>
-    <span class="mut">Alta ${esc(c.fecha_alta)} · ${esc(c.modalidad)} ${c.origen ? '· origen ' + esc(c.origen) : ''} ${c.notas ? '<br>Notas: ' + esc(c.notas) : ''}</span></p>
+    <span class="mut">Venta ${esc(c.fecha_alta)}${c.primer_venc ? ' · paga desde el ' + esc(c.primer_venc) : ''} · ${esc(c.modalidad)} ${c.origen ? '· origen ' + esc(c.origen) : ''} ${c.notas ? '<br>Notas: ' + esc(c.notas) : ''}</span></p>
     ${otros.length ? `<p class="mut">Otros cartones de esta persona: ${otros.map(o => 'N° ' + esc(o.numero_bono || 'a asignar') + (o.bonificado === 'SI' ? ' (regalo)' : '')).join(', ')}</p>` : ''}
     <table style="width:100%;font-size:.88rem;border-collapse:collapse">${c.grilla.map(g => `<tr style="border-bottom:1px solid #eee">
       <td><span class="chip ${g.estado}" style="display:inline-flex">${g.n}</span></td><td>${g.vence}</td><td>${pesos(g.monto)}</td>
@@ -368,6 +368,9 @@ function abrirAlta(intId){
     <div class="row2"><div><label>Localidad *</label><input id="aLoc" value="${esc(i.localidad || '')}"></div>
       <div><label>Provincia *</label><input id="aProv" value="${esc(i.provincia || 'Santa Fe')}"></div></div>
     <label>Fecha de venta (la que va en la boleta)</label><input id="aFecha" type="date" value="${new Date().toLocaleDateString('sv')}">
+    <label>Primera cuota vence <span class="mut" style="font-weight:400">(opcional)</span></label>
+    <input id="aPrimer" type="date" onchange="if(this.value)$('aPago').value=''">
+    <div class="mut" style="margin-top:4px">Si arreglaste que paga más adelante (por ejemplo, del 1 al 10), poné el día 10 del mes en que empieza. Las siguientes cuotas vencen ese mismo día cada mes y los recordatorios salen 5 días antes. Si lo dejás vacío, se usa la regla del bingo.</div>
     <label>Cartones que paga</label><select id="aCant" onchange="camposBonos()">${[1,2,3,4,5,6].map(n => `<option ${n == (b.promo_3x2 ? Math.ceil((i.cantidad || 1) * 2 / 3) : (i.cantidad || 1)) ? 'selected' : ''}>${n}</option>`).join('')}</select>
     <div id="aBonos"></div>
     <label>Modalidad</label><select id="aMod">${['Cuota a cuota','Varias cuotas juntas','Contado'].map(m => `<option ${m === i.modalidad ? 'selected' : ''}>${m}</option>`).join('')}</select>
@@ -406,6 +409,7 @@ async function guardarAlta(intId){
   const r = await api({ action: 'alta', clave: CLAVE, bingo: BID, interesado_id: intId, nombre: $('aNom').value.trim(), apellido: $('aApe').value.trim(), dni: $('aDni').value.trim(),
     telefono: $('aTel').value.trim(), direccion: $('aDir').value.trim(), localidad: $('aLoc').value.trim(), provincia: $('aProv').value.trim(), fecha_alta: $('aFecha').value, modalidad: $('aMod').value,
     notas: $('aNotas').value, origen: it ? it.origen : 'manual', bonos,
+    primer_venc: $('aPrimer').value,
     pago: $('aPago').value ? { cuotas: $('aPago').value, medio: $('aMedio').value, fecha: $('aFecha').value } : null });
   if (!aplicar(r)) { $('aBtn').disabled = false; $('aBtn').textContent = 'Dar de alta'; return; }
   const ids = r.nuevos_ids || [];
@@ -417,13 +421,13 @@ function abrirEditar(id){
   const c = D.compradores.find(x => x.id === id);
   const f = (k, l, t = 'text') => `<label>${l}</label><input id="e_${k}" type="${t}" value="${esc(k === 'nombre' ? c.nombre_solo : c[k])}">`;
   abrir(`<h3>Editar cartón</h3>${f('numero_bono','N° de cartón')}${f('nombre','Nombre')}${f('apellido','Apellido')}${f('dni','DNI')}${f('telefono','Teléfono')}${f('direccion','Dirección')}${f('localidad','Localidad')}${f('provincia','Provincia')}
-    ${f('fecha_alta','Fecha de alta (AAAA-MM-DD)')}${f('notas','Notas')}
+    ${f('fecha_alta','Fecha de venta (AAAA-MM-DD)')}${f('primer_venc','Primera cuota vence (AAAA-MM-DD, opcional)')}${f('notas','Notas')}
     <button class="b p" style="width:100%;margin-top:14px;padding:13px" onclick="guardarEditar('${id}')">Guardar</button>
     <button class="b r" style="width:100%;margin-top:8px" onclick="if(confirm('¿Dar de baja este cartón? (queda en la planilla con activo=NO)'))guardarEditar('${id}',true)">Dar de baja</button>`);
 }
 async function guardarEditar(id, baja){
   const campos = baja ? { activo: 'NO' } : {};
-  if (!baja) ['numero_bono','nombre','apellido','dni','telefono','direccion','localidad','provincia','fecha_alta','notas'].forEach(k => campos[k] = $('e_' + k).value.trim());
+  if (!baja) ['numero_bono','nombre','apellido','dni','telefono','direccion','localidad','provincia','fecha_alta','primer_venc','notas'].forEach(k => campos[k] = $('e_' + k).value.trim());
   if (aplicar(await api({ action: 'editarComprador', clave: CLAVE, bingo: BID, id, campos }))) { cerrar(); toast('Guardado'); }
 }
 async function marcarDefinitiva(id){
