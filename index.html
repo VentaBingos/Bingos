@@ -89,6 +89,22 @@
       <div><label for="provincia">Provincia</label><select id="provincia" autocomplete="address-level1"><option>Santa Fe</option><option>Buenos Aires</option><option>CABA</option><option>Catamarca</option><option>Chaco</option><option>Chubut</option><option>Córdoba</option><option>Corrientes</option><option>Entre Ríos</option><option>Formosa</option><option>Jujuy</option><option>La Pampa</option><option>La Rioja</option><option>Mendoza</option><option>Misiones</option><option>Neuquén</option><option>Río Negro</option><option>Salta</option><option>San Juan</option><option>San Luis</option><option>Santa Cruz</option><option>Santiago del Estero</option><option>Tierra del Fuego</option><option>Tucumán</option></select></div>
     </div>
 
+    <div id="mediasBox" style="display:none;margin-top:12px">
+      <label style="font-weight:600;display:flex;gap:8px;align-items:center;background:#f0fdf4;border-radius:10px;padding:10px">
+        <input type="checkbox" id="aMedias" style="width:auto" onchange="$('cot').style.display=this.checked?'block':'none'"> Lo compramos entre dos personas (a medias)</label>
+      <div id="cot" style="display:none;border-left:4px solid #16a34a;padding-left:10px;margin-top:6px">
+        <div class="mut">Datos de la segunda persona (van también en el cartón)</div>
+        <div class="row2">
+          <div><label for="cNombre">Nombre</label><input id="cNombre" placeholder="Ej: Omar"></div>
+          <div><label for="cApellido">Apellido</label><input id="cApellido" placeholder="Ej: Blanco"></div>
+        </div>
+        <div class="row2">
+          <div><label for="cDni">DNI</label><input id="cDni" inputmode="numeric"></div>
+          <div><label for="cTel">Teléfono <span class="opc">(opcional)</span></label><input id="cTel" type="tel" inputmode="tel"></div>
+        </div>
+      </div>
+    </div>
+
     <label>¿Cuántos cartones querés?</label>
     <div class="opts" id="cants"></div>
     <div class="regalo" id="regalo"></div>
@@ -179,6 +195,8 @@ function elegir(id) {
   $('cants').querySelectorAll('.opt').forEach(o => o.onclick = () => setCant(+o.dataset.n));
   setCant(1);
   $('listo').style.display = 'none';
+  $('mediasBox').style.display = sel.a_medias ? 'block' : 'none';
+  if (!sel.a_medias) { $('aMedias').checked = false; $('cot').style.display = 'none'; }
   $('f').style.display = 'block';
   $('f').scrollIntoView({ behavior: 'smooth' });
   setTimeout(() => { if (!$('nombre').value) $('nombre').focus({ preventScroll: true }); }, 600);
@@ -205,12 +223,16 @@ $('f').addEventListener('submit', async e => {
     ['dni', 'tu DNI (solo números)', x => /^\d{7,8}$/.test(x.replace(/\D/g, ''))],
     ['telefono', 'tu teléfono con característica (ej: 3482 123456)', x => x.replace(/\D/g, '').length >= 10],
     ['direccion', 'tu dirección', x => x.length >= 4], ['localidad', 'tu localidad', x => x.length >= 3], ['provincia', 'tu provincia', x => !!x]];
+  if ($('aMedias').checked) reglas.push(['cNombre', 'el nombre de la segunda persona', x => x.length >= 2], ['cApellido', 'el apellido de la segunda persona', x => x.length >= 2],
+    ['cDni', 'el DNI de la segunda persona', x => /^\d{7,8}$/.test(x.replace(/\D/g, ''))]);
   const mal = reglas.find(([k, , ok]) => !ok(v(k)));
   if (mal) return error('Completá ' + mal[1] + '.', mal[0]);
   $('fErr').textContent = '';
   const btn = $('enviar'); btn.disabled = true; btn.textContent = 'Enviando…';
   const d = { action: 'interesado', bingo: sel.id, nombre: v('nombre'), apellido: v('apellido'), dni: v('dni').replace(/\D/g, ''),
     telefono: v('telefono'), direccion: v('direccion'), localidad: v('localidad'), provincia: v('provincia'),
+    a_medias: $('aMedias').checked, cotitular_nombre: $('aMedias').checked ? v('cNombre') : '', cotitular_apellido: $('aMedias').checked ? v('cApellido') : '',
+    cotitular_dni: $('aMedias').checked ? v('cDni').replace(/\D/g, '') : '', cotitular_telefono: $('aMedias').checked ? v('cTel') : '',
     cantidad: cantidad + regalos(cantidad), modalidad, origen: sessionStorage.getItem('origen') || 'directo' };
   localStorageSafe('set', 'bingo_datos', JSON.stringify({ nombre: d.nombre, apellido: d.apellido, dni: d.dni, telefono: d.telefono, direccion: d.direccion, localidad: d.localidad, provincia: d.provincia }));
 
@@ -222,6 +244,7 @@ $('f').addEventListener('submit', async e => {
   const r = regalos(cantidad);
   const msg = `Hola ${VENDEDOR_NOMBRE.split(" ")[0]}! Me anote en la web para el ${sel.nombre}. Que numeros de carton tenes disponibles?\n\n` +
     `Nombre: ${d.nombre} ${d.apellido}\nDNI: ${d.dni}\nDireccion: ${d.direccion}\nLocalidad: ${d.localidad}, ${d.provincia}\nTelefono: ${d.telefono}\n` +
+    (d.a_medias ? `A medias con: ${d.cotitular_nombre} ${d.cotitular_apellido} - DNI ${d.cotitular_dni}${d.cotitular_telefono ? ' - Tel ' + d.cotitular_telefono : ''}\n` : '') +
     `Cartones: ${cantidad}${r ? ' (+' + r + ' de regalo 3x2)' : ''}\nForma de pago: ${modalidad}`;
   const link = `https://wa.me/${VENDEDOR_WA}?text=${encodeURIComponent(msg)}`;
 
