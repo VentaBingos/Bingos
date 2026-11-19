@@ -223,7 +223,7 @@ function render(){
   if (TAB === 'interesados') {
     h = D.interesados.map(i => `<div class="item">
       <div class="l1"><div><h4>${esc(i.nombre)}</h4>
-        <div class="mut">${esc(i.fecha)} · DNI ${esc(i.dni || '-')} · ${esc(i.telefono)}<br>${esc(i.direccion || '')} · ${esc(i.localidad || '')}, ${esc(i.provincia || '')}</div>
+        <div class="mut">${esc(i.fecha)} · DNI ${esc(i.dni || '-')}${i.cotitular_dni ? ' / ' + esc(i.cotitular_dni) : ''} · ${esc(i.telefono)}${i.cotitular_nombre ? ' · <b>a medias</b>' : ''}<br>${esc(i.direccion || '')} · ${esc(i.localidad || '')}, ${esc(i.provincia || '')}</div>
         <div class="mut">Quiere <b>${esc(i.cantidad)} cartón(es)</b> · ${esc(i.modalidad)} · origen: ${esc(i.origen)}</div></div>
         <span class="tag ${i.estado === 'NUEVO' ? 'ATRASADO' : 'AL_DIA'}">${i.estado}</span></div>
       <div class="acc">
@@ -288,7 +288,7 @@ function detalle(id){
   const otros = D.compradores.filter(x => x.id !== id && x.dni && x.dni === c.dni);
   const movs = D.movimientos.filter(m => m.comprador_id === id);
   abrir(`<h3>Cartón N° ${c.numero_bono ? esc(c.numero_bono) : 'A ASIGNAR'}</h3><span class="tag ${c.estado}">${c.etiqueta}</span>
-    <p>${esc(c.nombre)} · DNI ${esc(c.dni)}<br>${esc(c.telefono)}<br>${esc(c.direccion)} · ${esc(c.localidad)}, ${esc(c.provincia)}<br>
+    <p>${c.cotitular_nombre ? `<b>A medias:</b><br>${esc([c.nombre_solo, c.apellido].join(' '))} · DNI ${esc(c.dni)}<br>${esc(c.cotitular_nombre + ' ' + c.cotitular_apellido)} · DNI ${esc(c.cotitular_dni)}${c.cotitular_telefono ? ' · ' + esc(c.cotitular_telefono) : ''}` : esc(c.nombre) + ' · DNI ' + esc(c.dni)}<br>${esc(c.telefono)}<br>${esc(c.direccion)} · ${esc(c.localidad)}, ${esc(c.provincia)}<br>
     <span class="mut">Venta ${esc(c.fecha_alta)}${c.primer_venc ? ' · paga desde el ' + esc(c.primer_venc) : ''} · ${esc(c.modalidad)} ${c.origen ? '· origen ' + esc(c.origen) : ''} ${c.notas ? '<br>Notas: ' + esc(c.notas) : ''}</span></p>
     ${otros.length ? `<p class="mut">Otros cartones de esta persona: ${otros.map(o => 'N° ' + esc(o.numero_bono || 'a asignar') + (o.bonificado === 'SI' ? ' (regalo)' : '')).join(', ')}</p>` : ''}
     <table style="width:100%;font-size:.88rem;border-collapse:collapse">${c.grilla.map(g => `<tr style="border-bottom:1px solid #eee">
@@ -351,7 +351,7 @@ function confirmarWA(ids, tipo){
   const bs = D.compradores.filter(x => ids.includes(x.id));
   const c = bs[0], b = bingo();
   const linea = bs.map(x => `Carton N° ${x.numero_bono || '(a confirmar)'}: ${x.bonificado === 'SI' ? 'REGALO 3x2' : x.pagadas + '/' + x.total + ' cuotas' + (x.estado === 'CANCELADO' ? ' - CANCELADO' : ' - proximo vencimiento ' + x.prox_venc)}`).join('\n');
-  const txt = `Hola ${c.nombre.split(' ')[0]}! ${tipo === 'alta' ? 'Ya quedaste anotado en el ' : 'Recibi tu pago del '}${b.nombre.split(' – ')[0]}.\n${linea}\nAlias para pagar: ${b.alias}. Gracias!`;
+  const txt = `Hola ${c.saludo || c.nombre.split(' ')[0]}! ${tipo === 'alta' ? 'Ya quedaste anotado en el ' : 'Recibi tu pago del '}${b.nombre.split(' – ')[0]}.\n${linea}\nAlias para pagar: ${b.alias}. Gracias!`;
   const link = c.wa.split('?')[0] + '?text=' + encodeURIComponent(txt);
   abrir(`<h3>✅ Guardado</h3><p>${esc(c.nombre)}</p><pre style="white-space:pre-wrap;background:#f1f5f9;padding:10px;border-radius:10px;font-size:.85rem">${esc(txt)}</pre>
     <a class="b wa" style="width:100%;text-align:center;padding:14px" href="${link}" target="_blank" onclick="cerrar()">Enviar comprobante por WhatsApp</a>
@@ -368,6 +368,14 @@ function abrirAlta(intId){
       <div><label>Apellido *</label><input id="aApe" value="${esc(i.apellido || '')}"></div></div>
     <div class="row2"><div><label>DNI *</label><input id="aDni" inputmode="numeric" value="${esc(i.dni || '')}"></div>
       <div><label>Teléfono *</label><input id="aTel" inputmode="tel" value="${esc(i.telefono || '')}"></div></div>
+    ${b.a_medias || i.cotitular_nombre ? `<label style="display:flex;gap:8px;align-items:center;background:#f0fdf4;border-radius:10px;padding:10px;margin-top:12px">
+      <input type="checkbox" id="aMed" style="width:auto" ${i.cotitular_nombre ? 'checked' : ''} onchange="$('aCot').style.display=this.checked?'block':'none'"> Cartón a nombre de dos personas (a medias)</label>
+    <div id="aCot" style="display:${i.cotitular_nombre ? 'block' : 'none'};border-left:4px solid #16a34a;padding-left:10px">
+      <div class="row2"><div><label>Nombre 2° persona *</label><input id="aCN" value="${esc(i.cotitular_nombre || '')}"></div>
+        <div><label>Apellido 2° persona *</label><input id="aCA" value="${esc(i.cotitular_apellido || '')}"></div></div>
+      <div class="row2"><div><label>DNI 2° persona *</label><input id="aCD" inputmode="numeric" value="${esc(i.cotitular_dni || '')}"></div>
+        <div><label>Teléfono 2° persona</label><input id="aCT" inputmode="tel" value="${esc(i.cotitular_telefono || '')}"></div></div>
+    </div>` : ''}
     <label>Dirección *</label><input id="aDir" value="${esc(i.direccion || '')}">
     <div class="row2"><div><label>Localidad *</label><input id="aLoc" value="${esc(i.localidad || '')}"></div>
       <div><label>Provincia *</label><input id="aProv" value="${esc(i.provincia || 'Santa Fe')}"></div></div>
@@ -405,6 +413,8 @@ function camposBonos(){
 async function guardarAlta(intId){
   const bonos = [...document.querySelectorAll('.nb')].map(x => x.value.trim());
   const req = [['aNom','Nombre'],['aApe','Apellido'],['aDni','DNI'],['aTel','Teléfono'],['aDir','Dirección'],['aLoc','Localidad'],['aProv','Provincia']];
+  const med = $('aMed') && $('aMed').checked;
+  if (med) req.push(['aCN','Nombre de la 2° persona'],['aCA','Apellido de la 2° persona'],['aCD','DNI de la 2° persona']);
   const falta = req.find(([id]) => !$(id).value.trim());
   if (falta) { $(falta[0]).focus(); return toast('Falta: ' + falta[1]); }
   if (bonos.some(x => !x) && !confirm('Hay cartones sin número. Quedan como "A ASIGNAR" y los completás después desde Editar. ¿Seguimos?')) return;
@@ -414,6 +424,8 @@ async function guardarAlta(intId){
     telefono: $('aTel').value.trim(), direccion: $('aDir').value.trim(), localidad: $('aLoc').value.trim(), provincia: $('aProv').value.trim(), fecha_alta: $('aFecha').value, modalidad: $('aMod').value,
     notas: $('aNotas').value, origen: it ? it.origen : 'manual', bonos,
     primer_venc: $('aPrimer').value,
+    cotitular_nombre: med ? $('aCN').value.trim() : '', cotitular_apellido: med ? $('aCA').value.trim() : '',
+    cotitular_dni: med ? $('aCD').value.trim() : '', cotitular_telefono: med ? $('aCT').value.trim() : '',
     pago: $('aPago').value ? { cuotas: $('aPago').value, medio: $('aMedio').value, fecha: $('aFecha').value } : null });
   if (!aplicar(r)) { $('aBtn').disabled = false; $('aBtn').textContent = 'Dar de alta'; return; }
   const ids = r.nuevos_ids || [];
@@ -424,14 +436,16 @@ async function guardarAlta(intId){
 function abrirEditar(id){
   const c = D.compradores.find(x => x.id === id);
   const f = (k, l, t = 'text') => `<label>${l}</label><input id="e_${k}" type="${t}" value="${esc(k === 'nombre' ? c.nombre_solo : c[k])}">`;
-  abrir(`<h3>Editar cartón</h3>${f('numero_bono','N° de cartón')}${f('nombre','Nombre')}${f('apellido','Apellido')}${f('dni','DNI')}${f('telefono','Teléfono')}${f('direccion','Dirección')}${f('localidad','Localidad')}${f('provincia','Provincia')}
+  abrir(`<h3>Editar cartón</h3>${f('numero_bono','N° de cartón')}${f('nombre','Nombre')}${f('apellido','Apellido')}${f('dni','DNI')}${f('telefono','Teléfono')}
+    <div class="mut" style="margin-top:12px"><b>Segunda persona (si es a medias)</b> · dejalo vacío si es de una sola</div>
+    ${f('cotitular_nombre','Nombre 2° persona')}${f('cotitular_apellido','Apellido 2° persona')}${f('cotitular_dni','DNI 2° persona')}${f('cotitular_telefono','Teléfono 2° persona')}${f('direccion','Dirección')}${f('localidad','Localidad')}${f('provincia','Provincia')}
     ${f('fecha_alta','Fecha de venta (AAAA-MM-DD)')}${f('primer_venc','Primera cuota vence (AAAA-MM-DD, opcional)')}${f('notas','Notas')}
     <button class="b p" style="width:100%;margin-top:14px;padding:13px" onclick="guardarEditar('${id}')">Guardar</button>
     <button class="b r" style="width:100%;margin-top:8px" onclick="if(confirm('¿Dar de baja este cartón? (queda en la planilla con activo=NO)'))guardarEditar('${id}',true)">Dar de baja</button>`);
 }
 async function guardarEditar(id, baja){
   const campos = baja ? { activo: 'NO' } : {};
-  if (!baja) ['numero_bono','nombre','apellido','dni','telefono','direccion','localidad','provincia','fecha_alta','primer_venc','notas'].forEach(k => campos[k] = $('e_' + k).value.trim());
+  if (!baja) ['numero_bono','nombre','apellido','dni','telefono','cotitular_nombre','cotitular_apellido','cotitular_dni','cotitular_telefono','direccion','localidad','provincia','fecha_alta','primer_venc','notas'].forEach(k => campos[k] = $('e_' + k).value.trim());
   if (aplicar(await api({ action: 'editarComprador', clave: CLAVE, bingo: BID, id, campos }))) { cerrar(); toast('Guardado'); }
 }
 async function marcarDefinitiva(id){
