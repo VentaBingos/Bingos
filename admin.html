@@ -178,7 +178,7 @@ function kpis(){
   const n = D.interesados.filter(i => i.estado === 'NUEVO').length;
   const rec = D.compradores.filter(c => c.recordar).length;
   $('tabs').querySelector('[data-t=interesados]').innerHTML = 'Interesados' + (n ? `<span class="badge">${n}</span>` : '');
-  $('tabs').querySelector('[data-t=disp]').innerHTML = 'Disponibles' + (D.disponibles ? ` <span class="mut">(${D.disponibles.libres.length})</span>` : '');
+  $('tabs').querySelector('[data-t=disp]').innerHTML = 'Disponibles' + (D.disponibles ? ` <span class="mut">(${libresReales().length})</span>` : '');
 }
 $('tabs').querySelectorAll('button').forEach(b => b.onclick = () => {
   TAB = b.dataset.t; $('tabs').querySelectorAll('button').forEach(x => x.classList.toggle('on', x === b));
@@ -252,7 +252,8 @@ function render(){
     if (!A.length && !AG.fechas.length) h += '<div class="vacio">Nada pendiente por ahora 🎉</div>';
   }
   if (TAB === 'disp') {
-    const d = D.disponibles || { libres: [], total: 0, asignados: 0 };
+    const d0 = D.disponibles || { libres: [], total: 0, asignados: 0 };
+    const d = Object.assign({}, d0, { libres: libresReales() });
     h = `<div class="item"><h4>${d.libres.length} cartones libres <span class="mut">· ${d.asignados} vendidos · ${d.total} en total</span></h4>
       <div class="mut">Cargá los números que te entregó el club. Podés escribirlos sueltos (0510, 0511) o por rango (0520-0540). También los podés escribir a mano en la hoja DISPONIBLES de la planilla.</div>
       <textarea id="dTxt" rows="3" style="margin-top:8px" placeholder="Ej: 0510, 0511, 0520-0540"></textarea>
@@ -403,9 +404,9 @@ function camposBonos(){
   for (let j = 1; j <= n + reg; j++) {
     const esRegalo = reg && j % 3 === 0;
     h += `<label>${esRegalo ? '🎁 N° de cartón de REGALO (3x2)' : 'N° de cartón ' + (++pn)} <span class="mut" style="font-weight:400">(opcional, lo podés cargar después)</span></label>
-      <input class="nb ${esRegalo ? 'regalo' : ''}" inputmode="numeric" list="libresDL" value="${esc(prev[k++] || '')}">`;
+      <input class="nb ${esRegalo ? 'regalo' : ''}" inputmode="numeric" list="libresDL" onfocus="refrescarDL(this)" value="${esc(prev[k++] || '')}">`;
   }
-  const libres = D.disponibles ? D.disponibles.libres : [];
+  const libres = libresReales();
   h += `<datalist id="libresDL">${libres.map(n => `<option value="${esc(n)}">`).join('')}</datalist>` +
     (libres.length ? `<button type="button" class="b s" style="margin-top:8px" onclick="completarLibres()">Completar con cartones libres (${libres.length})</button>` : '');
   $('aBonos').innerHTML = h + (reg ? `<div class="prev">Promo 3x2: paga ${n} y lleva ${n + reg}. El cartón de regalo queda cancelado sin cuotas.</div>` : '');
@@ -417,6 +418,8 @@ async function guardarAlta(intId){
   if (med) req.push(['aCN','Nombre de la 2° persona'],['aCA','Apellido de la 2° persona'],['aCD','DNI de la 2° persona']);
   const falta = req.find(([id]) => !$(id).value.trim());
   if (falta) { $(falta[0]).focus(); return toast('Falta: ' + falta[1]); }
+  const vend = bonos.filter(b => b && D.compradores.some(c => nroKey(c.numero_bono) === nroKey(b)));
+  if (vend.length) return toast('Ese cartón ya está vendido: ' + vend.join(', '));
   if (bonos.some(x => !x) && !confirm('Hay cartones sin número. Quedan como "A ASIGNAR" y los completás después desde Editar. ¿Seguimos?')) return;
   $('aBtn').disabled = true; $('aBtn').textContent = 'Guardando…';
   const it = intId ? D.interesados.find(x => x.id === intId) : null;
@@ -500,6 +503,19 @@ function detalleRend(){
 }
 
 // ---------- DISPONIBLES ----------
+/** "02832" y "2832" son el mismo cartón */
+const nroKey = x => { const t = String(x == null ? '' : x).trim(); return /^\d+$/.test(t) ? t.replace(/^0+(?=\d)/, '') : t.toUpperCase(); };
+/** Libres de verdad: saca los que ya tiene algún comprador y (opcional) los que ya elegiste en este formulario */
+function libresReales(excluir){
+  const vendidos = new Set(D.compradores.map(c => nroKey(c.numero_bono)).filter(Boolean));
+  const ex = new Set((excluir || []).map(nroKey).filter(Boolean));
+  return (D.disponibles ? D.disponibles.libres : []).filter(n => !vendidos.has(nroKey(n)) && !ex.has(nroKey(n)));
+}
+/** Al tocar una casilla de N° de cartón, la lista muestra solo los libres que no elegiste en otra casilla */
+function refrescarDL(input){
+  const otros = [...document.querySelectorAll('.nb')].filter(x => x !== input).map(x => x.value);
+  $('libresDL').innerHTML = libresReales(otros).map(n => `<option value="${esc(n)}">`).join('');
+}
 async function cargarDisp(){
   const t = $('dTxt').value.trim(); if (!t) return toast('Escribí los números');
   $('dBtn').disabled = true; $('dBtn').textContent = 'Guardando…';
@@ -517,7 +533,7 @@ function copiarLibres(){
 /** Completa los números vacíos del alta con los próximos libres */
 function completarLibres(){
   const usados = [...document.querySelectorAll('.nb')].map(x => x.value.trim());
-  const libres = (D.disponibles ? D.disponibles.libres : []).filter(n => !usados.includes(n));
+  const libres = libresReales(usados);
   let k = 0; document.querySelectorAll('.nb').forEach(x => { if (!x.value.trim() && libres[k]) x.value = libres[k++]; });
   if (!k) toast('No hay más cartones libres cargados');
 }
